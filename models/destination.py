@@ -8,3 +8,4 @@ class Destination(BaseModel):
     rating: Optional[float] = None
     description: Optional[str] = None
     region: Optional[str] = None
+    
