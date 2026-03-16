@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from database import users_collection
 from models.user import User, UserLogin, UserPreferences
 from bson import ObjectId
@@ -10,7 +10,7 @@ def fix_id(doc):
     del doc["_id"]
     return doc
 
-# ── Register ──────────────────────────────────────────────────────
+# Register new user
 @router.post("/users/register")
 def register(user: User):
     existing = users_collection.find_one({"email": user.email})
@@ -19,7 +19,7 @@ def register(user: User):
     users_collection.insert_one(user.dict())
     return {"message": "Registered successfully"}
 
-# ── Login ─────────────────────────────────────────────────────────
+# Login
 @router.post("/users/login")
 def login(credentials: UserLogin):
     user = users_collection.find_one({
@@ -30,7 +30,7 @@ def login(credentials: UserLogin):
         return {"error": "Wrong email or password"}
     return {"message": "Login successful", "user": user}
 
-# ── Save survey preferences ───────────────────────────────────────
+# Save survey preferences
 @router.put("/users/{user_id}/preferences")
 def save_preferences(user_id: str, prefs: UserPreferences):
     result = users_collection.update_one(
@@ -41,7 +41,7 @@ def save_preferences(user_id: str, prefs: UserPreferences):
         return {"error": "User not found"}
     return {"message": "Preferences saved successfully"}
 
-# ── Get user profile ──────────────────────────────────────────────
+# Get user profile
 @router.get("/users/{user_id}")
 def get_user(user_id: str):
     user = users_collection.find_one({"_id": ObjectId(user_id)})
