@@ -13,3 +13,5 @@ users_collection = db["users"]
 reviews_collection = db["reviews"]
 
 print("✅ Connected to MongoDB:", db.name)
+likes_collection = db["likes"]
+lists_collection = db["lists"]

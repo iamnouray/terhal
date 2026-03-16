@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+ from fastapi import APIRouter
 from database import reviews_collection
 from models.review import Review
 
@@ -22,4 +22,3 @@ def get_reviews(destination_id: str):
         {"destination_id": destination_id}, {"_id": 0}
     ))
     return {"count": len(reviews), "data": reviews}
-    
