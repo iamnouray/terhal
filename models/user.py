@@ -3,8 +3,8 @@ from typing import Optional
 
 class UserPreferences(BaseModel):
     city: Optional[str] = None            # riyadh, jeddah, abha, alula, madinah
-    group: Optional[str] = None           # solo, friends, family, couple
-    time: Optional[str] = None            # morning, afternoon, evening, late night
+    visitor_type: Optional[str] = None    # solo, friends, family, couple
+    preferred_time: Optional[str] = None  # morning, afternoon, evening, late night
     mood: Optional[str] = None            # adventurous, relaxed, energetic, calm & quiet
     activity: Optional[str] = None        # breakfast, lunch/dinner, coffee, shopping, scenic drive & views
     budget: Optional[str] = None          # $, $$, $$$
