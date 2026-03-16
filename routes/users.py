@@ -1,7 +1,6 @@
 from fastapi import APIRouter, HTTPException
-from database import users_collection, reviews_collection
+from database import users_collection
 from models.user import User, UserLogin, UserPreferences
-from models.review import Review
 from bson import ObjectId
 
 router = APIRouter(tags=["users"])
@@ -49,17 +48,3 @@ def get_user(user_id: str):
     if not user:
         return {"error": "User not found"}
     return fix_id(user)
-
-# ── Add review ────────────────────────────────────────────────────
-@router.post("/reviews")
-def add_review(review: Review):
-    reviews_collection.insert_one(review.dict())
-    return {"message": "Review added successfully"}
-
-# ── Get reviews for a place ───────────────────────────────────────
-@router.get("/reviews/{destination_id}")
-def get_reviews(destination_id: str):
-    reviews = list(reviews_collection.find(
-        {"destination_id": destination_id}, {"_id": 0}
-    ))
-    return {"count": len(reviews), "data": reviews}
