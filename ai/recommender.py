@@ -111,26 +111,24 @@ def build_feature_matrix(df):
 
 
 def _normalize_survey(survey: dict) -> dict:
-    """Normalize survey answers to match dataset values exactly."""
     normalized = dict(survey)
 
     # Normalize city
     raw_city = (survey.get("city") or "").lower().strip()
     normalized["city"] = CITY_MAP.get(raw_city, survey.get("city"))
 
-    # Normalize group
-    raw_group = (survey.get("group") or "").lower().strip()
-    normalized["group"] = GROUP_MAP.get(raw_group, survey.get("group"))
+    # Normalize visitor_type
+    raw_group = (survey.get("visitor_type") or "").lower().strip()
+    normalized["visitor_type"] = GROUP_MAP.get(raw_group, survey.get("visitor_type"))
 
-    # Normalize time
-    raw_time = (survey.get("time") or "").lower().strip()
-    normalized["time"] = TIME_MAP.get(raw_time, survey.get("time"))
+    # Normalize preferred_time
+    raw_time = (survey.get("preferred_time") or "").lower().strip()
+    normalized["preferred_time"] = TIME_MAP.get(raw_time, survey.get("preferred_time"))
 
     return normalized
 
 
 def _apply_survey_boost(df: pd.DataFrame, survey: dict) -> pd.Series:
-    """Give extra score to places matching survey answers."""
     boost = pd.Series(0.0, index=df.index)
 
     # Mood → tags
@@ -153,14 +151,14 @@ def _apply_survey_boost(df: pd.DataFrame, survey: dict) -> pd.Series:
                 sub_col.str.contains(cat, na=False)
             ).astype(float) * 2.5
 
-    # Group → visitor_type
-    group = (survey.get("group") or "").lower().strip()
+    # visitor_type
+    group = (survey.get("visitor_type") or "").lower().strip()
     if group:
         visitor_col = df.get("visitor_type", pd.Series("", index=df.index)).fillna("").str.lower()
         boost += visitor_col.str.contains(group, na=False).astype(float) * 3.0
 
-    # Time → preferred_time
-    time_pref = (survey.get("time") or "").lower().strip()
+    # preferred_time
+    time_pref = (survey.get("preferred_time") or "").lower().strip()
     if time_pref:
         time_col = df.get("preferred_time", pd.Series("", index=df.index)).fillna("").str.lower()
         boost += time_col.str.contains(time_pref, na=False).astype(float) * 3.0
@@ -172,7 +170,7 @@ def _apply_survey_boost(df: pd.DataFrame, survey: dict) -> pd.Series:
         price_col = df.get("prices", pd.Series("", index=df.index)).fillna("").str.strip()
         boost += price_col.isin(allowed).astype(float) * 2.0
 
-    # City boost (extra weight for selected city)
+    # City boost
     city = (survey.get("city") or "").strip()
     if city:
         city_col = df.get("city", pd.Series("", index=df.index)).fillna("")
@@ -195,20 +193,19 @@ def get_recommendations(
     environment: str = None,
     budget: str = None,
 ):
-    # Get all places from MongoDB
     all_places = list(destinations_collection.find({}, {"_id": 0}))
     if not all_places:
         return []
 
     df = pd.DataFrame(all_places).reset_index(drop=True)
 
-    # Normalize survey answers
+    # Normalize survey
     survey = _normalize_survey(survey)
 
     # Pull values from survey if not passed directly
     city           = city           or survey.get("city")
-    visitor_type   = visitor_type   or survey.get("group")
-    preferred_time = preferred_time or survey.get("time")
+    visitor_type   = visitor_type   or survey.get("visitor_type")
+    preferred_time = preferred_time or survey.get("preferred_time")
     budget         = budget         or survey.get("budget")
 
     # ── STEP 1: Context Filtering ─────────────────────────────────
@@ -247,7 +244,6 @@ def get_recommendations(
         if not tmp.empty:
             filtered = tmp
 
-    # Safety fallback — always have enough places
     if len(filtered) < top_n:
         filtered = df[df["city"].str.lower() == city.lower()] if city else df.copy()
     if len(filtered) < top_n:
@@ -266,7 +262,7 @@ def get_recommendations(
     # ── STEP 3: Survey boost scores ──────────────────────────────
     survey_boost = _apply_survey_boost(filtered, survey)
 
-    # ── STEP 4: Cosine similarity (if user has history) ──────────
+    # ── STEP 4: Cosine similarity ─────────────────────────────────
     liked_reviews = [r for r in user_reviews if r.get("rating", 0) >= 4]
 
     if liked_reviews:
@@ -291,22 +287,16 @@ def get_recommendations(
             )
             filtered["survey_boost"] = survey_boost.values
 
-            # Normalize all scores to 0-1
             for col in ["similarity_score", "weighted_rating", "survey_boost"]:
                 if filtered[col].max() > 0:
                     filtered[col] = filtered[col] / filtered[col].max()
 
-            # Final score weights:
-            # 50% personal taste (cosine)
-            # 30% place quality (weighted rating)
-            # 20% survey context match
             filtered["final_score"] = (
                 0.5 * filtered["similarity_score"] +
                 0.3 * filtered["weighted_rating"]  +
                 0.2 * filtered["survey_boost"]
             )
 
-            # Diversity: 70% fav category + 30% other categories
             fav_category = (
                 liked_places["category"].mode()[0]
                 if "category" in liked_places.columns
@@ -323,7 +313,6 @@ def get_recommendations(
             else:
                 top_pool = filtered.nlargest(min(top_n * 2, len(filtered)), "final_score")
 
-            # Freshness shuffle
             result = top_pool.sample(frac=1, random_state=None).head(top_n)
             result = result.drop(
                 columns=["similarity_score", "weighted_rating", "final_score",
@@ -332,8 +321,7 @@ def get_recommendations(
             )
             return result.to_dict(orient="records")
 
-    # ── STEP 5: New user fallback (no history) ────────────────────
-    # Use survey boost + weighted rating only
+    # ── STEP 5: New user fallback ─────────────────────────────────
     filtered = filtered.copy()
     filtered["weighted_rating"] = filtered.apply(
         lambda r: weighted_score(r.get("rating", 0), r.get("reviews", 0)), axis=1
