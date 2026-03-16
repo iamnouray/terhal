@@ -1,14 +1,14 @@
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Optional
 
 class UserPreferences(BaseModel):
-    city: Optional[str] = None
-    visitor_type: Optional[str] = None        # solo, friends, couple, family
-    preferred_time: Optional[str] = None      # Morning, Afternoon, Evening, Night
-    environment: Optional[str] = None         # Indoor, Outdoor
-    budget: Optional[str] = None              # $, $$, $$$
-    mood: Optional[str] = None                # calm, energetic, adventurous, relaxed
-    activity_type: Optional[str] = None       # breakfast, lunch, dinner, shopping, views
+    city: Optional[str] = None            # riyadh, jeddah, abha, alula, madinah
+    group: Optional[str] = None           # solo, friends, family, couple
+    time: Optional[str] = None            # morning, afternoon, evening, late night
+    mood: Optional[str] = None            # adventurous, relaxed, energetic, calm & quiet
+    activity: Optional[str] = None        # breakfast, lunch/dinner, coffee, shopping, scenic drive & views
+    budget: Optional[str] = None          # $, $$, $$$
+    environment: Optional[str] = None     # Indoor, Outdoor
 
 class User(BaseModel):
     username: str
