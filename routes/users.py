@@ -1,11 +1,17 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from database import users_collection, reviews_collection
-from models.user import User
+from models.user import User, UserLogin, UserPreferences
 from models.review import Review
+from bson import ObjectId
 
 router = APIRouter(tags=["users"])
 
-# Register new user
+def fix_id(doc):
+    doc["id"] = str(doc["_id"])
+    del doc["_id"]
+    return doc
+
+# ── Register ──────────────────────────────────────────────────────
 @router.post("/users/register")
 def register(user: User):
     existing = users_collection.find_one({"email": user.email})
@@ -14,23 +20,43 @@ def register(user: User):
     users_collection.insert_one(user.dict())
     return {"message": "Registered successfully"}
 
-# Login
+# ── Login ─────────────────────────────────────────────────────────
 @router.post("/users/login")
-def login(email: str, password: str):
-    user = users_collection.find_one(
-        {"email": email, "password": password}, {"_id": 0}
-    )
+def login(credentials: UserLogin):
+    user = users_collection.find_one({
+        "email": credentials.email,
+        "password": credentials.password
+    }, {"_id": 0})
     if not user:
         return {"error": "Wrong email or password"}
     return {"message": "Login successful", "user": user}
 
-# Add review
+# ── Save survey preferences ───────────────────────────────────────
+@router.put("/users/{user_id}/preferences")
+def save_preferences(user_id: str, prefs: UserPreferences):
+    result = users_collection.update_one(
+        {"_id": ObjectId(user_id)},
+        {"$set": {"preferences": prefs.dict()}}
+    )
+    if result.modified_count == 0:
+        return {"error": "User not found"}
+    return {"message": "Preferences saved successfully"}
+
+# ── Get user profile ──────────────────────────────────────────────
+@router.get("/users/{user_id}")
+def get_user(user_id: str):
+    user = users_collection.find_one({"_id": ObjectId(user_id)})
+    if not user:
+        return {"error": "User not found"}
+    return fix_id(user)
+
+# ── Add review ────────────────────────────────────────────────────
 @router.post("/reviews")
 def add_review(review: Review):
     reviews_collection.insert_one(review.dict())
     return {"message": "Review added successfully"}
 
-# Get reviews for a destination
+# ── Get reviews for a place ───────────────────────────────────────
 @router.get("/reviews/{destination_id}")
 def get_reviews(destination_id: str):
     reviews = list(reviews_collection.find(
