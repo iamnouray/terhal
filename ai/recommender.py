@@ -7,6 +7,17 @@ import math
 import re
 
 # ─────────────────────────────────────────
+# CACHE — loads places once, not every request
+# ─────────────────────────────────────────
+_cached_places = None
+
+def _get_all_places():
+    global _cached_places
+    if _cached_places is None:
+        _cached_places = list(destinations_collection.find({}, {"_id": 0}))
+    return _cached_places
+
+# ─────────────────────────────────────────
 # SURVEY MAPPINGS
 # ─────────────────────────────────────────
 
@@ -53,6 +64,21 @@ TIME_MAP = {
     "late night": "Late Night",
 }
 
+# Scoring weights
+CITY_BOOST     = 5.0
+GROUP_BOOST    = 3.0
+TIME_BOOST     = 3.0
+ACTIVITY_BOOST = 2.5
+BUDGET_BOOST   = 2.0
+MOOD_BOOST     = 1.5
+
+SIMILARITY_WEIGHT = 0.5
+QUALITY_WEIGHT    = 0.3
+SURVEY_WEIGHT     = 0.2
+
+NEW_USER_QUALITY_WEIGHT = 0.6
+NEW_USER_SURVEY_WEIGHT  = 0.4
+
 # ─────────────────────────────────────────
 # HELPERS
 # ─────────────────────────────────────────
@@ -96,6 +122,7 @@ def build_feature_matrix(df):
     )
     features = pd.concat([features, visitor_encoded], axis=1)
 
+    df = df.copy()
     df["time_clean"] = df["preferred_time"].apply(extract_time_keywords)
     time_lists = df["time_clean"].apply(
         lambda x: [t.strip() for t in str(x).split(",") if t.strip()]
@@ -112,34 +139,25 @@ def build_feature_matrix(df):
 
 def _normalize_survey(survey: dict) -> dict:
     normalized = dict(survey)
-
-    # Normalize city
-    raw_city = (survey.get("city") or "").lower().strip()
+    raw_city  = (survey.get("city") or "").lower().strip()
     normalized["city"] = CITY_MAP.get(raw_city, survey.get("city"))
-
-    # Normalize visitor_type
     raw_group = (survey.get("visitor_type") or "").lower().strip()
     normalized["visitor_type"] = GROUP_MAP.get(raw_group, survey.get("visitor_type"))
-
-    # Normalize preferred_time
-    raw_time = (survey.get("preferred_time") or "").lower().strip()
+    raw_time  = (survey.get("preferred_time") or "").lower().strip()
     normalized["preferred_time"] = TIME_MAP.get(raw_time, survey.get("preferred_time"))
-
     return normalized
 
 
 def _apply_survey_boost(df: pd.DataFrame, survey: dict) -> pd.Series:
     boost = pd.Series(0.0, index=df.index)
 
-    # Mood → tags
     mood = (survey.get("mood") or "").lower().strip()
     mood_keywords = MOOD_TAG_MAP.get(mood, [])
     if mood_keywords:
         tags_col = df.get("tags", pd.Series("", index=df.index)).fillna("").str.lower()
         for kw in mood_keywords:
-            boost += tags_col.str.contains(kw, na=False).astype(float) * 1.5
+            boost += tags_col.str.contains(kw, na=False).astype(float) * MOOD_BOOST
 
-    # Activity → category + subtypes
     activity = (survey.get("activity") or "").lower().strip()
     target_cats = ACTIVITY_CATEGORY_MAP.get(activity, [])
     if target_cats:
@@ -149,32 +167,28 @@ def _apply_survey_boost(df: pd.DataFrame, survey: dict) -> pd.Series:
             boost += (
                 cat_col.str.contains(cat, na=False) |
                 sub_col.str.contains(cat, na=False)
-            ).astype(float) * 2.5
+            ).astype(float) * ACTIVITY_BOOST
 
-    # visitor_type
     group = (survey.get("visitor_type") or "").lower().strip()
     if group:
         visitor_col = df.get("visitor_type", pd.Series("", index=df.index)).fillna("").str.lower()
-        boost += visitor_col.str.contains(group, na=False).astype(float) * 3.0
+        boost += visitor_col.str.contains(group, na=False).astype(float) * GROUP_BOOST
 
-    # preferred_time
     time_pref = (survey.get("preferred_time") or "").lower().strip()
     if time_pref:
         time_col = df.get("preferred_time", pd.Series("", index=df.index)).fillna("").str.lower()
-        boost += time_col.str.contains(time_pref, na=False).astype(float) * 3.0
+        boost += time_col.str.contains(time_pref, na=False).astype(float) * TIME_BOOST
 
-    # Budget → prices
     budget = (survey.get("budget") or "").strip()
     allowed = BUDGET_MAP.get(budget, [])
     if allowed:
         price_col = df.get("prices", pd.Series("", index=df.index)).fillna("").str.strip()
-        boost += price_col.isin(allowed).astype(float) * 2.0
+        boost += price_col.isin(allowed).astype(float) * BUDGET_BOOST
 
-    # City boost
     city = (survey.get("city") or "").strip()
     if city:
         city_col = df.get("city", pd.Series("", index=df.index)).fillna("")
-        boost += (city_col.str.lower() == city.lower()).astype(float) * 5.0
+        boost += (city_col.str.lower() == city.lower()).astype(float) * CITY_BOOST
 
     return boost
 
@@ -185,7 +199,7 @@ def _apply_survey_boost(df: pd.DataFrame, survey: dict) -> pd.Series:
 
 def get_recommendations(
     user_id: str,
-    survey: dict = {},
+    survey: dict = None,
     top_n: int = 10,
     city: str = None,
     visitor_type: str = None,
@@ -193,13 +207,17 @@ def get_recommendations(
     environment: str = None,
     budget: str = None,
 ):
-    all_places = list(destinations_collection.find({}, {"_id": 0}))
+    if survey is None:
+        survey = {}
+
+    # Load from cache — fast after first request
+    all_places = _get_all_places()
     if not all_places:
         return []
 
     df = pd.DataFrame(all_places).reset_index(drop=True)
 
-    # Normalize survey
+    # Normalize survey answers
     survey = _normalize_survey(survey)
 
     # Pull values from survey if not passed directly
@@ -262,7 +280,7 @@ def get_recommendations(
     # ── STEP 3: Survey boost scores ──────────────────────────────
     survey_boost = _apply_survey_boost(filtered, survey)
 
-    # ── STEP 4: Cosine similarity ─────────────────────────────────
+    # ── STEP 4: Cosine similarity (returning users) ───────────────
     liked_reviews = [r for r in user_reviews if r.get("rating", 0) >= 4]
 
     if liked_reviews:
@@ -277,8 +295,8 @@ def get_recommendations(
             filtered_features = feature_matrix.iloc[:n_filtered].values
             liked_features    = feature_matrix.iloc[n_filtered:].values
 
-            user_profile  = liked_features.mean(axis=0).reshape(1, -1)
-            similarities  = cosine_similarity(user_profile, filtered_features)[0]
+            user_profile = liked_features.mean(axis=0).reshape(1, -1)
+            similarities = cosine_similarity(user_profile, filtered_features)[0]
 
             filtered = filtered.copy()
             filtered["similarity_score"] = similarities
@@ -292,9 +310,9 @@ def get_recommendations(
                     filtered[col] = filtered[col] / filtered[col].max()
 
             filtered["final_score"] = (
-                0.5 * filtered["similarity_score"] +
-                0.3 * filtered["weighted_rating"]  +
-                0.2 * filtered["survey_boost"]
+                SIMILARITY_WEIGHT * filtered["similarity_score"] +
+                QUALITY_WEIGHT    * filtered["weighted_rating"]  +
+                SURVEY_WEIGHT     * filtered["survey_boost"]
             )
 
             fav_category = (
@@ -333,8 +351,8 @@ def get_recommendations(
             filtered[col] = filtered[col] / filtered[col].max()
 
     filtered["final_score"] = (
-        0.6 * filtered["weighted_rating"] +
-        0.4 * filtered["survey_boost"]
+        NEW_USER_QUALITY_WEIGHT * filtered["weighted_rating"] +
+        NEW_USER_SURVEY_WEIGHT  * filtered["survey_boost"]
     )
 
     top_pool = filtered.nlargest(min(top_n * 3, len(filtered)), "final_score")

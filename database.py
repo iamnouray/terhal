@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-client = MongoClient(os.getenv("MONGODB_URL"), tls=True, tlsAllowInvalidCertificates=True)
+client = MongoClient(os.getenv("MONGODB_URL"), tlsCAFile=certifi.where())
 db = client[os.getenv("DATABASE_NAME", "terhal_db")]
 
 destinations_collection = db["destinations"]

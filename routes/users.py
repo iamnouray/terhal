@@ -1,4 +1,8 @@
 from fastapi import APIRouter
+import hashlib
+
+def hash_password(password: str) -> str:
+    return hashlib.sha256(password.encode()).hexdigest()
 from database import users_collection
 from models.user import User, UserLogin, UserPreferences
 from bson import ObjectId
@@ -16,7 +20,9 @@ def register(user: User):
     existing = users_collection.find_one({"email": user.email})
     if existing:
         return {"error": "Email already registered"}
-    users_collection.insert_one(user.dict())
+    new_user = user.dict()
+    new_user["password"] = hash_password(user.password)
+    users_collection.insert_one(new_user)
     return {"message": "Registered successfully"}
 
 # Login
@@ -24,7 +30,7 @@ def register(user: User):
 def login(credentials: UserLogin):
     user = users_collection.find_one({
         "email": credentials.email,
-        "password": credentials.password
+        "password": hash_password(credentials.password)
     }, {"_id": 0})
     if not user:
         return {"error": "Wrong email or password"}

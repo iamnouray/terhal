@@ -21,8 +21,8 @@ def recommend(
         user = users_collection.find_one({"_id": ObjectId(user_id)})
         if user and "preferences" in user:
             survey = user["preferences"]
-    except:
-        pass
+    except Exception as e:
+        print(f"Could not load preferences: {e}")
 
     results = get_recommendations(
         user_id=user_id,
