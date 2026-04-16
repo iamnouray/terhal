@@ -53,4 +53,57 @@ Future<List<dynamic>> searchDestinations(String query) async {
     return [];
   }
 }
+// 5. Add a New Review (Person 4)
+  Future<void> addReview(String destId, String userName, double rating, String comment) async {
+    final response = await http.post(
+      Uri.parse("$baseUrl/reviews/"),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({
+        "destination_id": destId,
+        "user_name": userName,
+        "rating": rating,
+        "comment": comment
+      }),
+    );
+    if (response.statusCode != 201 && response.statusCode != 200) {
+      throw Exception("Failed to post review");
+    }
+  }
+
+  // 6. Get User Profile Data (Person 5)
+  Future<Map<String, dynamic>> getUserProfile(String userId) async {
+    final response = await http.get(Uri.parse("$baseUrl/users/$userId"));
+    if (response.statusCode == 200) {
+      return jsonDecode(utf8.decode(response.bodyBytes));
+    } else {
+      throw Exception("Failed to load profile");
+    }
+  }
+
+  // 7. Get User's Saved Lists (Person 4 & 5)
+  Future<List<dynamic>> getUserLists(String userId) async {
+    final response = await http.get(Uri.parse("$baseUrl/lists/$userId"));
+    if (response.statusCode == 200) {
+      return jsonDecode(utf8.decode(response.bodyBytes));
+    } else {
+      return [];
+    }
+  }
+  // إضافة مكان إلى قائمة (Person 4)
+  Future<void> addToList(String userId, String destName) async {
+    await http.post(
+      Uri.parse("$baseUrl/lists"),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({"user_id": userId, "destination_name": destName}),
+    );
+  }
+
+  // حذف مكان من القائمة (Person 4/5)
+  Future<void> removeFromList(String userId, String destName) async {
+    await http.delete(
+      Uri.parse("$baseUrl/lists"),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({"user_id": userId, "destination_name": destName}),
+    );
+  }
 }
