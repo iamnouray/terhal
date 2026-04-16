@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'screens/place_details_screen.dart'; // هذا السطر يستدعي تعبك وشغلك
-
+import 'screens/search_screen.dart';
 void main() {
   runApp(const TerhalApp());
 }
@@ -17,8 +16,8 @@ class TerhalApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal), // ألوان هوية ترحال
         useMaterial3: true,
       ),
-      // هنا نطلب من التطبيق يفتح على شاشتك فوراً
-      home: PlaceDetailsScreen(placeName: "Al-Ula"), 
+      // Change this in main.dart
+     home: SearchScreen(),
     );
   }
 }

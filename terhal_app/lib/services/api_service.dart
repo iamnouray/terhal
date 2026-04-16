@@ -42,4 +42,14 @@ class ApiService {
       return []; 
     }
   }
+  // Task (Person 5): Search destinations by name or category
+Future<List<dynamic>> searchDestinations(String query) async {
+  final response = await http.get(Uri.parse("$baseUrl/search?city=$query"));
+
+  if (response.statusCode == 200) {
+    final data = jsonDecode(utf8.decode(response.bodyBytes));
+    return data['data']; // Returns the list of matching places
+  } else {
+    return [];
+  }
 }
