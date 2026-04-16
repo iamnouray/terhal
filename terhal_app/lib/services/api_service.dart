@@ -53,3 +53,4 @@ Future<List<dynamic>> searchDestinations(String query) async {
     return [];
   }
 }
+}

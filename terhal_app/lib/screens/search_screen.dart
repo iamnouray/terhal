@@ -15,7 +15,7 @@ class _SearchScreenState extends State<SearchScreen> {
   String selectedCategory = "All";
   final TextEditingController _searchController = TextEditingController();
 
-  // Function to fetch and filter places
+  // Function to fetch and filter places from the API
   void _fetchPlaces(String value) async {
     try {
       final data = await apiService.searchDestinations(value);
@@ -23,7 +23,7 @@ class _SearchScreenState extends State<SearchScreen> {
         if (selectedCategory == "All") {
           results = data;
         } else {
-          // Filter results based on the selected category
+          // Filter results based on the selected category (Person 5 Task)
           results = data.where((p) => p['category'] == selectedCategory).toList();
         }
       });
@@ -35,58 +35,70 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchPlaces(""); // Load all places initially
+    _fetchPlaces(""); // Load all destinations when the screen opens
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Explore Destinations"),
+        title: const Text("Explore Saudi Arabia"),
         backgroundColor: Colors.teal,
         foregroundColor: Colors.white,
         elevation: 0,
       ),
       body: Column(
         children: [
-          // 1. Search Bar Section
+          // 1. Professional Search Bar with Shadow
           Container(
             padding: const EdgeInsets.all(16.0),
-            color: Colors.teal.withOpacity(0.1),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: "Search for a city or place...",
-                filled: true,
-                fillColor: Colors.white,
-                prefixIcon: const Icon(Icons.search, color: Colors.teal),
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.clear),
-                  onPressed: () {
-                    _searchController.clear();
-                    _fetchPlaces("");
-                  },
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(30),
-                  borderSide: BorderSide.none,
-                ),
+            color: Colors.teal.withOpacity(0.05),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(30),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
               ),
-              onChanged: _fetchPlaces,
+              child: TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: "Search for Al-Ula, Riyadh, Diriyah...",
+                  prefixIcon: const Icon(Icons.search, color: Colors.teal),
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.clear),
+                    onPressed: () {
+                      _searchController.clear();
+                      _fetchPlaces("");
+                    },
+                  ),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 15),
+                ),
+                onChanged: _fetchPlaces,
+              ),
             ),
           ),
 
-          // 2. Category Filters Section
+          // 2. Category Filters
           const Padding(
-            padding: EdgeInsets.only(top: 15, left: 15),
+            padding: EdgeInsets.only(top: 20, left: 20, bottom: 10),
             child: Align(
               alignment: Alignment.centerLeft,
-              child: Text("Categories", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              child: Text(
+                "Popular Categories",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.teal),
+              ),
             ),
           ),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 15),
             child: Row(
               children: ["All", "Historical", "Nature", "Entertainment"].map((category) => Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 5),
@@ -94,7 +106,15 @@ class _SearchScreenState extends State<SearchScreen> {
                   label: Text(category),
                   selected: selectedCategory == category,
                   selectedColor: Colors.teal,
-                  labelStyle: TextStyle(color: selectedCategory == category ? Colors.white : Colors.black),
+                  labelStyle: TextStyle(
+                    color: selectedCategory == category ? Colors.white : Colors.teal,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  backgroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    side: const BorderSide(color: Colors.teal),
+                  ),
                   onSelected: (bool selected) {
                     setState(() {
                       selectedCategory = category;
@@ -106,31 +126,34 @@ class _SearchScreenState extends State<SearchScreen> {
             ),
           ),
 
-          // 3. Results List Section
+          const SizedBox(height: 10),
+
+          // 3. Destinations List (Professional Image Cards)
           Expanded(
             child: results.isEmpty
-                ? const Center(child: Text("No destinations found. Try another search!"))
+                ? const Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.map_outlined, size: 70, color: Colors.grey),
+                        SizedBox(height: 10),
+                        Text("Searching for amazing spots..."),
+                      ],
+                    ),
+                  )
                 : ListView.builder(
                     padding: const EdgeInsets.all(10),
                     itemCount: results.length,
                     itemBuilder: (context, index) {
                       final place = results[index];
                       return Card(
-                        elevation: 3,
-                        margin: const EdgeInsets.symmetric(vertical: 8),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                        child: ListTile(
-                          contentPadding: const EdgeInsets.all(10),
-                          leading: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(color: Colors.teal.shade50, shape: BoxShape.circle),
-                            child: const Icon(Icons.map, color: Colors.teal),
-                          ),
-                          title: Text(place['name'] ?? "Unknown Place", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                          subtitle: Text(place['category'] ?? "General"),
-                          trailing: const Icon(Icons.arrow_forward_ios, color: Colors.teal, size: 18),
+                        elevation: 4,
+                        margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(20),
                           onTap: () {
-                            // Navigate to the Details Screen (Person 4 task)
+                            // Linking Person 5 to Person 4
                             Navigator.push(
                               context,
                               MaterialPageRoute(
@@ -138,6 +161,50 @@ class _SearchScreenState extends State<SearchScreen> {
                               ),
                             );
                           },
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Destination Image
+                              ClipRRect(
+                                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                                child: Image.network(
+                                  "https://images.unsplash.com/photo-1589308078059-be1415eab4c3?q=80&w=800",
+                                  height: 180,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) => Container(
+                                    height: 180,
+                                    color: Colors.teal.shade50,
+                                    child: const Icon(Icons.image, size: 50, color: Colors.teal),
+                                  ),
+                                ),
+                              ),
+                              // Destination Details
+                              Padding(
+                                padding: const EdgeInsets.all(15.0),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          place['name'] ?? "Unknown Place",
+                                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                                        ),
+                                        const SizedBox(height: 5),
+                                        Text(
+                                          place['category'] ?? "General",
+                                          style: TextStyle(color: Colors.grey.shade600),
+                                        ),
+                                      ],
+                                    ),
+                                    const Icon(Icons.arrow_forward_ios, color: Colors.teal, size: 20),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       );
                     },
