@@ -3,7 +3,9 @@ import '../services/api_service.dart';
 
 class ProfileScreen extends StatelessWidget {
   final ApiService apiService = ApiService();
-  final String userId = "user_123"; // مؤقتاً
+  final String userId = "user_123";
+
+  ProfileScreen({super.key}); // مؤقتاً
 
   @override
   Widget build(BuildContext context) {
