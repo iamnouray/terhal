@@ -3,15 +3,40 @@ import 'package:http/http.dart' as http;
 import '../models/destination.dart';
 
 class ApiService {
-  // Base URL for your project's backend on Render
+  // Base URL
   final String baseUrl = "https://terhal-bapl.onrender.com";
+
+  // --- دالة تسجيل الدخول (تم تصحيح المسار هنا) ---
+  Future<Map<String, dynamic>> login(String email, String password) async {
+    // تم تغيير الرابط ليطابق ما هو موجود في routes/users.py
+    final url = Uri.parse("$baseUrl/users/login"); 
+    
+    try {
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"email": email, "password": password}),
+      );
+
+      print("Login Status: ${response.statusCode}");
+      print("Login Response: ${response.body}");
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception('Login failed: ${response.statusCode}');
+      }
+    } catch (e) {
+      print("💥 Login Error: $e");
+      throw Exception('Connection error: $e');
+    }
+  }
 
   // 1. Task (Person 4): Fetch details for a specific destination
   Future<Destination> getDestinationDetails(String name) async {
     final response = await http.get(Uri.parse("$baseUrl/destinations/$name"));
     
     if (response.statusCode == 200) {
-      // Decode the response using UTF-8 to support Arabic text correctly
       return Destination.fromJson(jsonDecode(utf8.decode(response.bodyBytes)));
     } else {
       throw Exception('Failed to load destination data from the server');
@@ -38,22 +63,23 @@ class ApiService {
     if (response.statusCode == 200) {
       return jsonDecode(utf8.decode(response.bodyBytes));
     } else {
-      // Return an empty list if no reviews are found
       return []; 
     }
   }
-  // Task (Person 5): Search destinations by name or category
-Future<List<dynamic>> searchDestinations(String query) async {
-  final response = await http.get(Uri.parse("$baseUrl/search?city=$query"));
 
-  if (response.statusCode == 200) {
-    final data = jsonDecode(utf8.decode(response.bodyBytes));
-    return data['data']; // Returns the list of matching places
-  } else {
-    return [];
+  // Task (Person 5): Search destinations by name or category
+  Future<List<dynamic>> searchDestinations(String query) async {
+    final response = await http.get(Uri.parse("$baseUrl/search?city=$query"));
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(utf8.decode(response.bodyBytes));
+      return data['data']; 
+    } else {
+      return [];
+    }
   }
-}
-// 5. Add a New Review (Person 4)
+
+  // 5. Add a New Review (Person 4)
   Future<void> addReview(String destId, String userName, double rating, String comment) async {
     final response = await http.post(
       Uri.parse("$baseUrl/reviews/"),
@@ -89,6 +115,7 @@ Future<List<dynamic>> searchDestinations(String query) async {
       return [];
     }
   }
+
   // إضافة مكان إلى قائمة (Person 4)
   Future<void> addToList(String userId, String destName) async {
     await http.post(
