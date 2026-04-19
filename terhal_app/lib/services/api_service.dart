@@ -6,10 +6,9 @@ class ApiService {
   // Base URL
   final String baseUrl = "https://terhal-bapl.onrender.com";
 
-  // --- دالة تسجيل الدخول (تم تصحيح المسار هنا) ---
+  // --- User Login ---
   Future<Map<String, dynamic>> login(String email, String password) async {
-    // تم تغيير الرابط ليطابق ما هو موجود في routes/users.py
-    final url = Uri.parse("$baseUrl/users/login"); 
+    final url = Uri.parse("$baseUrl/users/login");
     
     try {
       final response = await http.post(
@@ -32,8 +31,9 @@ class ApiService {
     }
   }
 
-  // 1. Task (Person 4): Fetch details for a specific destination
+  // 1. Fetch details for a specific destination
   Future<Destination> getDestinationDetails(String name) async {
+    // Corrected path based on your router prefix /destinations
     final response = await http.get(Uri.parse("$baseUrl/destinations/$name"));
     
     if (response.statusCode == 200) {
@@ -43,7 +43,7 @@ class ApiService {
     }
   }
 
-  // 2. Task (Person 4): Toggle the Like button (Add/Remove Favorite)
+  // 2. Toggle the Like button (Add/Remove Favorite)
   Future<void> toggleLike(String userId, String destId) async {
     final response = await http.post(
       Uri.parse("$baseUrl/likes"),
@@ -56,7 +56,7 @@ class ApiService {
     }
   }
 
-  // 3. Task (Person 4): Fetch reviews for a specific destination
+  // 3. Fetch reviews for a specific destination
   Future<List<dynamic>> getReviews(String destId) async {
     final response = await http.get(Uri.parse("$baseUrl/reviews/$destId"));
     
@@ -67,9 +67,10 @@ class ApiService {
     }
   }
 
-  // Task (Person 5): Search destinations by name or category
+  // 4. Search destinations by name or category
   Future<List<dynamic>> searchDestinations(String query) async {
-    final response = await http.get(Uri.parse("$baseUrl/search?city=$query"));
+    // IMPORTANT FIX: Added /destinations/ prefix to match your router
+    final response = await http.get(Uri.parse("$baseUrl/destinations/search?city=$query"));
 
     if (response.statusCode == 200) {
       final data = jsonDecode(utf8.decode(response.bodyBytes));
@@ -79,7 +80,7 @@ class ApiService {
     }
   }
 
-  // 5. Add a New Review (Person 4)
+  // 5. Add a New Review
   Future<void> addReview(String destId, String userName, double rating, String comment) async {
     final response = await http.post(
       Uri.parse("$baseUrl/reviews/"),
@@ -96,7 +97,7 @@ class ApiService {
     }
   }
 
-  // 6. Get User Profile Data (Person 5)
+  // 6. Get User Profile Data
   Future<Map<String, dynamic>> getUserProfile(String userId) async {
     final response = await http.get(Uri.parse("$baseUrl/users/$userId"));
     if (response.statusCode == 200) {
@@ -106,7 +107,7 @@ class ApiService {
     }
   }
 
-  // 7. Get User's Saved Lists (Person 4 & 5)
+  // 7. Get User's Saved Lists
   Future<List<dynamic>> getUserLists(String userId) async {
     final response = await http.get(Uri.parse("$baseUrl/lists/$userId"));
     if (response.statusCode == 200) {
@@ -116,7 +117,7 @@ class ApiService {
     }
   }
 
-  // إضافة مكان إلى قائمة (Person 4)
+  // Add a place to list
   Future<void> addToList(String userId, String destName) async {
     await http.post(
       Uri.parse("$baseUrl/lists"),
@@ -125,7 +126,7 @@ class ApiService {
     );
   }
 
-  // حذف مكان من القائمة (Person 4/5)
+  // Remove a place from list
   Future<void> removeFromList(String userId, String destName) async {
     await http.delete(
       Uri.parse("$baseUrl/lists"),
