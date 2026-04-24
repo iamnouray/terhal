@@ -37,7 +37,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
       }
 
       final response = await http.put(
-        Uri.parse('http://10.0.2.2:8000/users/$userId/preferences'),
+       Uri.parse('http://10.0.2.2:8000/users/$userId/preferences'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'mood': _mood,
