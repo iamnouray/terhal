@@ -29,7 +29,6 @@ def register(user: User):
 
 @router.post("/users/login")
 def login(credentials: UserLogin):
-    # Find user
     user = users_collection.find_one({
         "email": credentials.email,
         "password": hash_password(credentials.password)
@@ -37,13 +36,14 @@ def login(credentials: UserLogin):
     
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, 
+            status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Wrong email or password"
         )
     
-    # Clean up user object for response (remove password)
+    # ✅ الحل: حول لـ dict أول
+    user = dict(user)
     user["_id"] = str(user["_id"])
-    user.pop("password", None) 
+    user.pop("password", None)
     
     return {"message": "Login successful", "user": user}
 
