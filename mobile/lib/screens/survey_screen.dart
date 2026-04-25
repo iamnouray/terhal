@@ -22,6 +22,12 @@ class _SurveyScreenState extends State<SurveyScreen> {
   double _budget = 200;
 
   Future<void> _submitSurvey() async {
+    if (_city == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a city')),
+      );
+      return;
+    }
     setState(() => _isLoading = true);
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -49,6 +55,8 @@ class _SurveyScreenState extends State<SurveyScreen> {
           'environment': null,
         }),
       );
+      print('Survey status: ${response.statusCode}');  // ← هنا
+      print('Survey body: ${response.body}');           // ← وهنا
       final data = jsonDecode(response.body);
       if (data['error'] != null) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -141,8 +149,8 @@ class _SurveyScreenState extends State<SurveyScreen> {
             style: TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         for (final o in ['Riyadh', 'Jeddah', 'Abha', 'AlUla', 'Madinah'])
-          _buildOption(o, _city,
-                  (v) => setState(() => _city = v.toLowerCase())),
+       _buildOption(o, _city,
+       (v) => setState(() => _city = v)),
         const SizedBox(height: 24),
         const Text('How much is your budget?',
             style: TextStyle(fontWeight: FontWeight.bold)),
@@ -218,8 +226,22 @@ class _SurveyScreenState extends State<SurveyScreen> {
                   child: const Text('Back'),
                 ),
               if (!isLastStep)
-                ElevatedButton(
-                  onPressed: () => setState(() => _currentStep++),
+  ElevatedButton(
+    onPressed: () {
+      if (_currentStep == 0 && (_mood == null || _visitorType == null)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please answer all questions')),
+        );
+        return;
+      }
+      if (_currentStep == 1 && (_preferredTime == null || _activity == null)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please answer all questions')),
+        );
+        return;
+      }
+      setState(() => _currentStep++);
+    },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF6B5EA8),
                     minimumSize: const Size(double.infinity, 48),

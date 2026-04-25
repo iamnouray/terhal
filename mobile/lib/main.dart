@@ -4,7 +4,7 @@ import 'screens/register_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/survey_screen.dart';
 import 'screens/screens_home_search.dart'; // 👈 الصحيح
-
+import 'screens/profile_screen.dart';
 void main() {
   runApp(const MyApp());
 }
@@ -30,7 +30,8 @@ class MyApp extends StatelessWidget {
         '/survey': (context) => const SurveyScreen(),
 
         // 👇 يروح لواجهة الجديدة
-        '/home': (context) => MainShell(),
+        '/home': (context) => const MainShell(),
+'/profile': (context) => ProfileScreen(),
       },
     );
   }

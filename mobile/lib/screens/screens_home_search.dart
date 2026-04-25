@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-
+import 'profile_screen.dart';
+import 'place_details_screen.dart';
 
 
 // ─────────────────────────────────────────
@@ -18,10 +19,11 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   int _currentIndex = 0;
 
-  final List<Widget> _pages = const [
-    HomeScreen(),
-    SearchScreen(),
-  ];
+List<Widget> get _pages => [
+  const HomeScreen(),
+  const SearchScreen(),
+  ProfileScreen(),
+];
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +34,7 @@ class _MainShellState extends State<MainShell> {
         onDestinationSelected: (i) => setState(() => _currentIndex = i),
         backgroundColor: Colors.white,
         indicatorColor: const Color(0xFF6B5EA8).withOpacity(0.12),
-        destinations: const [
+        destinations: [
           NavigationDestination(
             icon: Icon(Icons.home_outlined),
             selectedIcon: Icon(Icons.home, color: Color(0xFF6B5EA8)),
@@ -43,6 +45,11 @@ class _MainShellState extends State<MainShell> {
             selectedIcon: Icon(Icons.search, color: Color(0xFF6B5EA8)),
             label: 'Search',
           ),
+          NavigationDestination(
+  icon: Icon(Icons.person_outlined),
+  selectedIcon: Icon(Icons.person, color: Color(0xFF6B5EA8)),
+  label: 'Profile',
+),
         ],
       ),
     );
@@ -54,7 +61,7 @@ class _MainShellState extends State<MainShell> {
 // ─────────────────────────────────────────
 const kPrimary = Color(0xFF6B5EA8);
 const kPrimaryLight = Color(0xFFF0EEFF);
-const kBaseUrl = 'http://localhost:8000'; // change to your server IP
+const kBaseUrl = 'http://10.0.2.2:8000';
 
 // ─────────────────────────────────────────
 // HOME SCREEN
@@ -107,9 +114,9 @@ class _HomeScreenState extends State<HomeScreen> {
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         setState(() {
-          _recommendations = List<Map<String, dynamic>>.from(
-            data['recommendations'] ?? [],
-          );
+         _recommendations = List<Map<String, dynamic>>.from(
+  data is List ? data : (data['recommendations'] ?? []),
+);
         });
       }
     } catch (_) {
@@ -439,9 +446,14 @@ class _HomeScreenState extends State<HomeScreen> {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(20),
-          onTap: () {
-            // navigate to detail
-          },
+         onTap: () {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => PlaceDetailsScreen(place: place),
+    ),
+  );
+},
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
@@ -664,7 +676,9 @@ class _SearchScreenState extends State<SearchScreen> {
       final res = await http.get(uri);
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
-        final all = List<Map<String, dynamic>>.from(data['data'] ?? []);
+        final all = List<Map<String, dynamic>>.from(
+  data is List ? data : (data['data'] ?? []),
+);
         // Client-side filter by query text
         final q = query.toLowerCase();
         setState(() {
@@ -1096,9 +1110,14 @@ class _SearchScreenState extends State<SearchScreen> {
               Icons.chevron_right,
               color: Color(0xFFCCCCCC),
             ),
-            onTap: () {
-              // navigate to detail
-            },
+           onTap: () {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => PlaceDetailsScreen(place: place),
+    ),
+  );
+},
           ),
         );
       },
