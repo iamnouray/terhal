@@ -2,7 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'profile_screen.dart';
+import 'place_details_screen.dart';
 
+
+// ─────────────────────────────────────────
+// MAIN SHELL — Bottom Nav (Home + Search)
+// ─────────────────────────────────────────
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
 
@@ -13,10 +19,11 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   int _currentIndex = 0;
 
-  final List<Widget> _pages = const [
-    HomeScreen(),
-    SearchScreen(),
-  ];
+List<Widget> get _pages => [
+  const HomeScreen(),
+  const SearchScreen(),
+  ProfileScreen(),
+];
 
   @override
   Widget build(BuildContext context) {
@@ -26,8 +33,8 @@ class _MainShellState extends State<MainShell> {
         selectedIndex: _currentIndex,
         onDestinationSelected: (i) => setState(() => _currentIndex = i),
         backgroundColor: Colors.white,
-        indicatorColor: const Color(0xFF6B5EA8),
-        destinations: const [
+        indicatorColor: const Color(0xFF6B5EA8).withOpacity(0.12),
+        destinations: [
           NavigationDestination(
             icon: Icon(Icons.home_outlined),
             selectedIcon: Icon(Icons.home, color: Color(0xFF6B5EA8)),
@@ -38,16 +45,27 @@ class _MainShellState extends State<MainShell> {
             selectedIcon: Icon(Icons.search, color: Color(0xFF6B5EA8)),
             label: 'Search',
           ),
+          NavigationDestination(
+  icon: Icon(Icons.person_outlined),
+  selectedIcon: Icon(Icons.person, color: Color(0xFF6B5EA8)),
+  label: 'Profile',
+),
         ],
       ),
     );
   }
 }
 
+// ─────────────────────────────────────────
+// CONSTANTS
+// ─────────────────────────────────────────
 const kPrimary = Color(0xFF6B5EA8);
 const kPrimaryLight = Color(0xFFF0EEFF);
 const kBaseUrl = 'http://10.0.2.2:8000';
 
+// ─────────────────────────────────────────
+// HOME SCREEN
+// ─────────────────────────────────────────
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -61,9 +79,11 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Map<String, dynamic>> _recommendations = [];
   bool _isLoading = true;
 
+  // Mood filter chips
   final List<String> _moods = ['All', 'Relaxed', 'Adventurous', 'Energetic', 'Calm & quiet'];
   int _selectedMood = 0;
 
+  // Category icons
   final Map<String, IconData> _categoryIcons = {
     'restaurant': Icons.restaurant,
     'cafe': Icons.coffee,
@@ -94,29 +114,26 @@ class _HomeScreenState extends State<HomeScreen> {
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         setState(() {
-          _recommendations = List<Map<String, dynamic>>.from(
-            data['recommendations'] ?? [],
-          );
+         _recommendations = List<Map<String, dynamic>>.from(
+  data is List ? data : (data['recommendations'] ?? []),
+);
         });
       }
-    } catch (_) {}
+    } catch (_) {
+      // fallback — show empty state
+    }
     setState(() => _isLoading = false);
-  }
-
-  String _getGreeting() {
-    final hour = DateTime.now().hour;
-    if (hour < 12) return 'Good morning,';
-    if (hour < 17) return 'Good afternoon,';
-    return 'Good evening,';
   }
 
   @override
   Widget build(BuildContext context) {
+    final greeting = _getGreeting();
     return Scaffold(
       backgroundColor: const Color(0xFFF8F7FF),
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
+            // ── Header ─────────────────────────────
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
@@ -130,8 +147,11 @@ class _HomeScreenState extends State<HomeScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              _getGreeting(),
-                              style: const TextStyle(fontSize: 14, color: Color(0xFF888888)),
+                              greeting,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: Color(0xFF888888),
+                              ),
                             ),
                             Text(
                               _username,
@@ -158,28 +178,40 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ),
                     const SizedBox(height: 20),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 10,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: const Row(
-                        children: [
-                          Icon(Icons.search, color: Color(0xFF888888)),
-                          SizedBox(width: 10),
-                          Text(
-                            'Search destinations, cafes...',
-                            style: TextStyle(color: Color(0xFF888888), fontSize: 15),
-                          ),
-                        ],
+                    // Search bar shortcut
+                    GestureDetector(
+                      onTap: () {
+                        // navigate to search tab
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 10,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          children: const [
+                            Icon(Icons.search, color: Color(0xFF888888)),
+                            SizedBox(width: 10),
+                            Text(
+                              'Search destinations, cafes...',
+                              style: TextStyle(
+                                color: Color(0xFF888888),
+                                fontSize: 15,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -187,6 +219,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
+
+            // ── Category Cards ──────────────────────
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -195,7 +229,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     const Text(
                       'Explore by Category',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Color(0xFF1A1A2E)),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF1A1A2E),
+                      ),
                     ),
                     const SizedBox(height: 14),
                     SizedBox(
@@ -217,6 +255,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
+
+            // ── Mood Filter ─────────────────────────
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -225,7 +265,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     const Text(
                       'For You',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Color(0xFF1A1A2E)),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF1A1A2E),
+                      ),
                     ),
                     const SizedBox(height: 10),
                     SizedBox(
@@ -233,14 +277,17 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,
                         itemCount: _moods.length,
-                        separatorBuilder: (_, __) => const SizedBox(width: 8),
+                        separatorBuilder: (_, _) => const SizedBox(width: 8),
                         itemBuilder: (context, i) {
                           final selected = _selectedMood == i;
                           return GestureDetector(
                             onTap: () => setState(() => _selectedMood = i),
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 200),
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
                               decoration: BoxDecoration(
                                 color: selected ? kPrimary : Colors.white,
                                 borderRadius: BorderRadius.circular(20),
@@ -266,24 +313,34 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
+
+            // ── Recommendations ─────────────────────
             _isLoading
                 ? const SliverToBoxAdapter(
                     child: Padding(
                       padding: EdgeInsets.only(top: 40),
-                      child: Center(child: CircularProgressIndicator(color: kPrimary)),
+                      child: Center(
+                        child: CircularProgressIndicator(color: kPrimary),
+                      ),
                     ),
                   )
                 : _recommendations.isEmpty
-                    ? SliverToBoxAdapter(child: _buildEmptyState())
+                    ? SliverToBoxAdapter(
+                        child: _buildEmptyState(),
+                      )
                     : SliverPadding(
                         padding: const EdgeInsets.symmetric(horizontal: 20),
                         sliver: SliverList(
                           delegate: SliverChildBuilderDelegate(
-                            (context, index) => _buildPlaceCard(_recommendations[index]),
+                            (context, index) {
+                              final place = _recommendations[index];
+                              return _buildPlaceCard(place);
+                            },
                             childCount: _recommendations.length,
                           ),
                         ),
                       ),
+
             const SliverToBoxAdapter(child: SizedBox(height: 24)),
           ],
         ),
@@ -291,42 +348,54 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return 'Good morning,';
+    if (hour < 17) return 'Good afternoon,';
+    return 'Good evening,';
+  }
+
   Widget _buildCategoryChip(String label, IconData icon, Color color) {
-    return Container(
-      margin: const EdgeInsets.only(right: 12),
-      width: 72,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.15),
-              shape: BoxShape.circle,
+    return GestureDetector(
+      onTap: () {
+        // filter by category
+      },
+      child: Container(
+        margin: const EdgeInsets.only(right: 12),
+        width: 72,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
-            child: Icon(icon, color: color, size: 20),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            label,
-            style: const TextStyle(fontSize: 11, color: Color(0xFF555555)),
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.15),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: color, size: 20),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 11, color: Color(0xFF555555)),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -341,13 +410,23 @@ class _HomeScreenState extends State<HomeScreen> {
     final time = place['preferred_time'] ?? '';
     final icon = _categoryIcons[category] ?? Icons.place;
 
-    Color accent;
+    // pick card accent color based on category
+    final Color accent;
     switch (category) {
-      case 'restaurant': accent = const Color(0xFFFF6B6B); break;
-      case 'cafe': accent = const Color(0xFF4ECDC4); break;
-      case 'park': accent = const Color(0xFF45B7D1); break;
-      case 'shopping': accent = const Color(0xFFF7DC6F); break;
-      default: accent = kPrimary;
+      case 'restaurant':
+        accent = const Color(0xFFFF6B6B);
+        break;
+      case 'cafe':
+        accent = const Color(0xFF4ECDC4);
+        break;
+      case 'park':
+        accent = const Color(0xFF45B7D1);
+        break;
+      case 'shopping':
+        accent = const Color(0xFFF7DC6F);
+        break;
+      default:
+        accent = kPrimary;
     }
 
     return Container(
@@ -367,11 +446,19 @@ class _HomeScreenState extends State<HomeScreen> {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(20),
-          onTap: () {},
+         onTap: () {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => PlaceDetailsScreen(place: place),
+    ),
+  );
+},
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
+                // Icon thumbnail
                 Container(
                   width: 60,
                   height: 60,
@@ -382,6 +469,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Icon(icon, color: accent, size: 28),
                 ),
                 const SizedBox(width: 14),
+                // Info
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -399,38 +487,85 @@ class _HomeScreenState extends State<HomeScreen> {
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          const Icon(Icons.location_on, size: 13, color: Color(0xFF888888)),
+                          const Icon(
+                            Icons.location_on,
+                            size: 13,
+                            color: Color(0xFF888888),
+                          ),
                           const SizedBox(width: 2),
-                          Text(city, style: const TextStyle(fontSize: 13, color: Color(0xFF888888))),
+                          Text(
+                            city,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFF888888),
+                            ),
+                          ),
                           if (time.isNotEmpty) ...[
                             const SizedBox(width: 8),
-                            const Icon(Icons.access_time, size: 13, color: Color(0xFF888888)),
+                            const Icon(
+                              Icons.access_time,
+                              size: 13,
+                              color: Color(0xFF888888),
+                            ),
                             const SizedBox(width: 2),
-                            Text(time, style: const TextStyle(fontSize: 13, color: Color(0xFF888888))),
+                            Text(
+                              time,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: Color(0xFF888888),
+                              ),
+                            ),
                           ],
                         ],
                       ),
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          const Icon(Icons.star_rounded, size: 15, color: Color(0xFFFFC107)),
-                          const SizedBox(width: 2),
-                          Text(
-                            rating.toStringAsFixed(1),
-                            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF1A1A2E)),
+                          // Rating
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.star_rounded,
+                                size: 15,
+                                color: Color(0xFFFFC107),
+                              ),
+                              const SizedBox(width: 2),
+                              Text(
+                                rating.toStringAsFixed(1),
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF1A1A2E),
+                                ),
+                              ),
+                              Text(
+                                ' ($reviews)',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFF888888),
+                                ),
+                              ),
+                            ],
                           ),
-                          Text(' ($reviews)', style: const TextStyle(fontSize: 12, color: Color(0xFF888888))),
                           const Spacer(),
+                          // Price badge
                           if (price.isNotEmpty)
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 3,
+                              ),
                               decoration: BoxDecoration(
                                 color: kPrimaryLight,
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
                                 price,
-                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: kPrimary),
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: kPrimary,
+                                ),
                               ),
                             ),
                         ],
@@ -439,7 +574,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                const Icon(Icons.chevron_right, color: Color(0xFFCCCCCC)),
+                const Icon(
+                  Icons.chevron_right,
+                  color: Color(0xFFCCCCCC),
+                ),
               ],
             ),
           ),
@@ -453,11 +591,19 @@ class _HomeScreenState extends State<HomeScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
       child: Column(
         children: [
-          Icon(Icons.explore_outlined, size: 64, color: kPrimary.withOpacity(0.3)),
+          Icon(
+            Icons.explore_outlined,
+            size: 64,
+            color: kPrimary.withOpacity(0.3),
+          ),
           const SizedBox(height: 16),
           const Text(
             'No recommendations yet',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Color(0xFF1A1A2E)),
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF1A1A2E),
+            ),
           ),
           const SizedBox(height: 8),
           const Text(
@@ -472,7 +618,9 @@ class _HomeScreenState extends State<HomeScreen> {
               backgroundColor: kPrimary,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
             child: const Text('Refresh'),
           ),
@@ -482,6 +630,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
+// ─────────────────────────────────────────
+// SEARCH SCREEN
+// ─────────────────────────────────────────
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
 
@@ -495,11 +646,13 @@ class _SearchScreenState extends State<SearchScreen> {
   bool _isSearching = false;
   bool _hasSearched = false;
 
+  // Filters
   String _selectedCity = 'All';
   String _selectedCategory = 'All';
   final List<String> _cities = ['All', 'Riyadh', 'Jeddah', 'Abha', 'AlUla', 'Madinah'];
   final List<String> _categories = ['All', 'Restaurant', 'Cafe', 'Park', 'Shopping', 'Museum'];
 
+  // Popular searches
   final List<String> _popular = [
     'Al-Ula Heritage',
     'Riyadh cafes',
@@ -517,21 +670,27 @@ class _SearchScreenState extends State<SearchScreen> {
     try {
       final cityParam = _selectedCity == 'All' ? '' : _selectedCity;
       final catParam = _selectedCategory == 'All' ? '' : _selectedCategory.toLowerCase();
-      final uri = Uri.parse('$kBaseUrl/destinations/search?city=$cityParam&category=$catParam');
+      final uri = Uri.parse(
+        '$kBaseUrl/destinations/search?city=$cityParam&category=$catParam',
+      );
       final res = await http.get(uri);
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
-        final all = List<Map<String, dynamic>>.from(data['data'] ?? []);
+        final all = List<Map<String, dynamic>>.from(
+  data is List ? data : (data['data'] ?? []),
+);
+        // Client-side filter by query text
         final q = query.toLowerCase();
         setState(() {
-          _results = all.where((p) =>
-            (p['name'] ?? '').toString().toLowerCase().contains(q) ||
-            (p['city'] ?? '').toString().toLowerCase().contains(q) ||
-            (p['category'] ?? '').toString().toLowerCase().contains(q)
-          ).toList();
+          _results = all
+              .where((p) =>
+                  (p['name'] ?? '').toString().toLowerCase().contains(q) ||
+                  (p['city'] ?? '').toString().toLowerCase().contains(q) ||
+                  (p['category'] ?? '').toString().toLowerCase().contains(q))
+              .toList();
         });
       }
-    } catch (e) {
+    } catch (_) {
       setState(() => _results = []);
     }
     setState(() => _isSearching = false);
@@ -545,6 +704,7 @@ class _SearchScreenState extends State<SearchScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // ── Search Header ───────────────────────
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
               child: Column(
@@ -552,9 +712,14 @@ class _SearchScreenState extends State<SearchScreen> {
                 children: [
                   const Text(
                     'Discover',
-                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: Color(0xFF1A1A2E)),
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF1A1A2E),
+                    ),
                   ),
                   const SizedBox(height: 14),
+                  // Search field
                   Container(
                     decoration: BoxDecoration(
                       color: Colors.white,
@@ -588,7 +753,10 @@ class _SearchScreenState extends State<SearchScreen> {
                               )
                             : null,
                         border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
                       ),
                       onChanged: (val) => setState(() {}),
                     ),
@@ -596,16 +764,28 @@ class _SearchScreenState extends State<SearchScreen> {
                 ],
               ),
             ),
+
+            // ── Filter Row ──────────────────────────
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Row(
                 children: [
                   Expanded(
-                    child: _buildDropdown('City', _selectedCity, _cities, (v) => setState(() => _selectedCity = v!)),
+                    child: _buildDropdown(
+                      'City',
+                      _selectedCity,
+                      _cities,
+                      (v) => setState(() => _selectedCity = v!),
+                    ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
-                    child: _buildDropdown('Category', _selectedCategory, _categories, (v) => setState(() => _selectedCategory = v!)),
+                    child: _buildDropdown(
+                      'Category',
+                      _selectedCategory,
+                      _categories,
+                      (v) => setState(() => _selectedCategory = v!),
+                    ),
                   ),
                   const SizedBox(width: 10),
                   ElevatedButton(
@@ -613,8 +793,13 @@ class _SearchScreenState extends State<SearchScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: kPrimary,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       elevation: 0,
                     ),
                     child: const Icon(Icons.tune),
@@ -622,10 +807,15 @@ class _SearchScreenState extends State<SearchScreen> {
                 ],
               ),
             ),
+
             const SizedBox(height: 16),
+
+            // ── Body ────────────────────────────────
             Expanded(
               child: _isSearching
-                  ? const Center(child: CircularProgressIndicator(color: kPrimary))
+                  ? const Center(
+                      child: CircularProgressIndicator(color: kPrimary),
+                    )
                   : !_hasSearched
                       ? _buildPopularSearches()
                       : _results.isEmpty
@@ -638,7 +828,12 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  Widget _buildDropdown(String hint, String value, List<String> items, void Function(String?) onChanged) {
+  Widget _buildDropdown(
+    String hint,
+    String value,
+    List<String> items,
+    void Function(String?) onChanged,
+  ) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
@@ -650,9 +845,14 @@ class _SearchScreenState extends State<SearchScreen> {
         child: DropdownButton<String>(
           value: value,
           isExpanded: true,
-          style: const TextStyle(fontSize: 13, color: Color(0xFF333333)),
+          style: const TextStyle(
+            fontSize: 13,
+            color: Color(0xFF333333),
+          ),
           onChanged: onChanged,
-          items: items.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+          items: items
+              .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+              .toList(),
         ),
       ),
     );
@@ -666,39 +866,64 @@ class _SearchScreenState extends State<SearchScreen> {
         children: [
           const Text(
             'Popular searches',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF1A1A2E)),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF1A1A2E),
+            ),
           ),
           const SizedBox(height: 12),
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: _popular.map((p) => GestureDetector(
-              onTap: () {
-                _searchController.text = p;
-                _search(p);
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFFE0E0E0)),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.trending_up, size: 14, color: kPrimary),
-                    const SizedBox(width: 6),
-                    Text(p, style: const TextStyle(fontSize: 13, color: Color(0xFF444444))),
-                  ],
-                ),
-              ),
-            )).toList(),
+            children: _popular
+                .map(
+                  (p) => GestureDetector(
+                    onTap: () {
+                      _searchController.text = p;
+                      _search(p);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: const Color(0xFFE0E0E0)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.trending_up,
+                            size: 14,
+                            color: kPrimary,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            p,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFF444444),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                )
+                .toList(),
           ),
           const SizedBox(height: 28),
           const Text(
             'Browse by City',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF1A1A2E)),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF1A1A2E),
+            ),
           ),
           const SizedBox(height: 12),
           GridView.count(
@@ -739,7 +964,14 @@ class _SearchScreenState extends State<SearchScreen> {
           children: [
             Icon(icon, color: color, size: 20),
             const SizedBox(width: 8),
-            Text(city, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: color)),
+            Text(
+              city,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: color,
+              ),
+            ),
           ],
         ),
       ),
@@ -751,14 +983,25 @@ class _SearchScreenState extends State<SearchScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.search_off, size: 64, color: kPrimary.withOpacity(0.3)),
+          Icon(
+            Icons.search_off,
+            size: 64,
+            color: kPrimary.withOpacity(0.3),
+          ),
           const SizedBox(height: 16),
           const Text(
             'No results found',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Color(0xFF1A1A2E)),
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF1A1A2E),
+            ),
           ),
           const SizedBox(height: 8),
-          const Text('Try a different keyword or filter', style: TextStyle(color: Color(0xFF888888))),
+          const Text(
+            'Try a different keyword or filter',
+            style: TextStyle(color: Color(0xFF888888)),
+          ),
         ],
       ),
     );
@@ -790,7 +1033,10 @@ class _SearchScreenState extends State<SearchScreen> {
             ],
           ),
           child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 8,
+            ),
             leading: Container(
               width: 48,
               height: 48,
@@ -802,7 +1048,11 @@ class _SearchScreenState extends State<SearchScreen> {
             ),
             title: Text(
               name,
-              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15, color: Color(0xFF1A1A2E)),
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 15,
+                color: Color(0xFF1A1A2E),
+              ),
             ),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -810,27 +1060,64 @@ class _SearchScreenState extends State<SearchScreen> {
                 const SizedBox(height: 2),
                 Row(
                   children: [
-                    const Icon(Icons.location_on, size: 12, color: Color(0xFF888888)),
+                    const Icon(
+                      Icons.location_on,
+                      size: 12,
+                      color: Color(0xFF888888),
+                    ),
                     const SizedBox(width: 2),
-                    Text('$city · $category', style: const TextStyle(fontSize: 13, color: Color(0xFF888888))),
+                    Text(
+                      '$city · $category',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF888888),
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    const Icon(Icons.star_rounded, size: 14, color: Color(0xFFFFC107)),
+                    const Icon(
+                      Icons.star_rounded,
+                      size: 14,
+                      color: Color(0xFFFFC107),
+                    ),
                     const SizedBox(width: 2),
-                    Text(rating.toStringAsFixed(1), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+                    Text(
+                      rating.toStringAsFixed(1),
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                     if (price.isNotEmpty) ...[
                       const SizedBox(width: 8),
-                      Text(price, style: const TextStyle(fontSize: 12, color: kPrimary, fontWeight: FontWeight.w600)),
+                      Text(
+                        price,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: kPrimary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ],
                   ],
                 ),
               ],
             ),
-            trailing: const Icon(Icons.chevron_right, color: Color(0xFFCCCCCC)),
-            onTap: () {},
+            trailing: const Icon(
+              Icons.chevron_right,
+              color: Color(0xFFCCCCCC),
+            ),
+           onTap: () {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => PlaceDetailsScreen(place: place),
+    ),
+  );
+},
           ),
         );
       },

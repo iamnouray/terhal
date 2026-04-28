@@ -1,0 +1,1259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Terhal — Smart Tourism Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --purple: #6B5EA8;
+  --purple-light: #EDE9F8;
+  --purple-dark: #4A3F7A;
+  --purple-mid: #9B8FD4;
+  --gold: #C9A84C;
+  --sand: #F7F4EF;
+  --dark: #1A1628;
+  --text: #2D2540;
+  --muted: #8B8499;
+  --white: #FFFFFF;
+  --border: #E8E4F0;
+  --card: #FDFCFF;
+  --shadow: 0 4px 24px rgba(107,94,168,0.10);
+  --shadow-lg: 0 12px 40px rgba(107,94,168,0.18);
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--sand);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ─── PAGES ─── */
+.page { display: none; min-height: 100vh; }
+.page.active { display: flex; flex-direction: column; }
+
+/* ─── LOGIN PAGE ─── */
+#loginPage {
+  background: linear-gradient(160deg, #1A1628 0%, #2D2540 50%, #4A3F7A 100%);
+  align-items: center; justify-content: center;
+  position: relative; overflow: hidden;
+}
+#loginPage::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 30% 20%, rgba(107,94,168,0.3) 0%, transparent 60%),
+              radial-gradient(ellipse at 80% 80%, rgba(201,168,76,0.15) 0%, transparent 50%);
+}
+.login-card {
+  background: rgba(255,255,255,0.06);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 28px;
+  padding: 48px 40px;
+  width: 420px; max-width: 90vw;
+  position: relative; z-index: 1;
+}
+.login-logo {
+  text-align: center; margin-bottom: 32px;
+}
+.login-logo .logo-icon {
+  width: 64px; height: 64px;
+  background: linear-gradient(135deg, var(--purple), var(--gold));
+  border-radius: 20px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 28px; margin-bottom: 12px;
+}
+.login-logo h1 {
+  font-family: 'Syne', sans-serif;
+  font-size: 32px; font-weight: 800;
+  color: white; letter-spacing: -0.5px;
+}
+.login-logo p { color: rgba(255,255,255,0.5); font-size: 14px; margin-top: 4px; }
+
+.login-tabs {
+  display: flex; gap: 4px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 12px; padding: 4px;
+  margin-bottom: 28px;
+}
+.tab-btn {
+  flex: 1; padding: 10px;
+  border: none; border-radius: 9px;
+  cursor: pointer; font-family: 'DM Sans', sans-serif;
+  font-size: 14px; font-weight: 500;
+  transition: all 0.2s;
+  background: transparent; color: rgba(255,255,255,0.5);
+}
+.tab-btn.active {
+  background: var(--purple); color: white;
+  box-shadow: 0 2px 12px rgba(107,94,168,0.4);
+}
+
+.form-group { margin-bottom: 16px; }
+.form-label {
+  display: block; font-size: 12px; font-weight: 500;
+  color: rgba(255,255,255,0.6); margin-bottom: 8px;
+  letter-spacing: 0.5px; text-transform: uppercase;
+}
+.form-input {
+  width: 100%; padding: 14px 16px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 12px; color: white;
+  font-family: 'DM Sans', sans-serif; font-size: 15px;
+  transition: all 0.2s; outline: none;
+}
+.form-input::placeholder { color: rgba(255,255,255,0.3); }
+.form-input:focus {
+  border-color: var(--purple-mid);
+  background: rgba(255,255,255,0.12);
+  box-shadow: 0 0 0 3px rgba(107,94,168,0.2);
+}
+
+.btn-primary {
+  width: 100%; padding: 16px;
+  background: linear-gradient(135deg, var(--purple), var(--purple-dark));
+  border: none; border-radius: 14px;
+  color: white; font-family: 'DM Sans', sans-serif;
+  font-size: 16px; font-weight: 500;
+  cursor: pointer; transition: all 0.2s;
+  box-shadow: 0 4px 20px rgba(107,94,168,0.4);
+  margin-top: 8px;
+}
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 28px rgba(107,94,168,0.5); }
+.btn-primary:active { transform: translateY(0); }
+.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+.error-msg {
+  background: rgba(231,76,60,0.15);
+  border: 1px solid rgba(231,76,60,0.3);
+  border-radius: 10px; padding: 12px 16px;
+  color: #FF8A80; font-size: 13px;
+  margin-bottom: 16px; display: none;
+}
+
+/* ─── SURVEY PAGE ─── */
+#surveyPage {
+  background: var(--sand);
+  padding: 0;
+}
+.survey-header {
+  background: white;
+  padding: 24px 24px 20px;
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 10;
+}
+.survey-progress {
+  display: flex; gap: 8px; margin-bottom: 12px;
+}
+.prog-dot {
+  height: 4px; border-radius: 4px;
+  transition: all 0.3s; background: var(--border);
+  flex: 1;
+}
+.prog-dot.active { background: var(--purple); }
+.prog-dot.done { background: var(--purple-mid); }
+.survey-header h2 {
+  font-family: 'Syne', sans-serif;
+  font-size: 22px; font-weight: 700; color: var(--dark);
+}
+.survey-header p { color: var(--muted); font-size: 14px; margin-top: 4px; }
+
+.survey-body { padding: 28px 24px; flex: 1; }
+.survey-step { display: none; }
+.survey-step.active { display: block; }
+
+.q-label {
+  font-size: 13px; font-weight: 500;
+  color: var(--muted); margin-bottom: 12px;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.options-grid {
+  display: flex; flex-direction: column; gap: 10px;
+  margin-bottom: 28px;
+}
+.option-btn {
+  padding: 14px 20px;
+  background: white; border: 1.5px solid var(--border);
+  border-radius: 50px; cursor: pointer;
+  font-family: 'DM Sans', sans-serif; font-size: 15px;
+  text-align: center; transition: all 0.2s; color: var(--text);
+}
+.option-btn:hover { border-color: var(--purple-mid); background: var(--purple-light); }
+.option-btn.selected {
+  background: var(--purple); border-color: var(--purple);
+  color: white; font-weight: 500;
+  box-shadow: 0 4px 16px rgba(107,94,168,0.3);
+}
+
+.budget-display {
+  text-align: center; margin: 24px 0 16px;
+}
+.budget-amount {
+  font-family: 'Syne', sans-serif;
+  font-size: 52px; font-weight: 800; color: var(--dark);
+}
+.budget-amount span { font-size: 22px; color: var(--muted); }
+.budget-slider {
+  width: 100%; -webkit-appearance: none;
+  height: 6px; border-radius: 3px;
+  background: linear-gradient(to right, var(--purple) 0%, var(--purple) 40%, var(--border) 40%);
+  outline: none;
+}
+.budget-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 24px; height: 24px;
+  border-radius: 50%; background: white;
+  border: 3px solid var(--purple);
+  box-shadow: 0 2px 8px rgba(107,94,168,0.3);
+  cursor: pointer;
+}
+
+.survey-footer {
+  padding: 20px 24px;
+  background: white; border-top: 1px solid var(--border);
+  display: flex; gap: 12px;
+}
+.btn-back {
+  padding: 14px 24px;
+  background: transparent; border: 1.5px solid var(--border);
+  border-radius: 50px; cursor: pointer;
+  font-family: 'DM Sans', sans-serif; font-size: 15px;
+  color: var(--muted); transition: all 0.2s;
+}
+.btn-back:hover { border-color: var(--purple); color: var(--purple); }
+.btn-next {
+  flex: 1; padding: 14px;
+  background: var(--purple); border: none;
+  border-radius: 50px; color: white; cursor: pointer;
+  font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500;
+  transition: all 0.2s;
+  box-shadow: 0 4px 16px rgba(107,94,168,0.3);
+}
+.btn-next:hover { background: var(--purple-dark); }
+.btn-next:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-skip {
+  padding: 14px 20px; background: transparent; border: none;
+  color: var(--muted); cursor: pointer;
+  font-family: 'DM Sans', sans-serif; font-size: 14px;
+}
+
+/* ─── NAV ─── */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: white; border-top: 1px solid var(--border);
+  display: flex; padding: 12px 0 20px;
+  z-index: 100;
+}
+.nav-item {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; gap: 4px;
+  background: none; border: none; cursor: pointer;
+  padding: 4px 0; transition: all 0.2s;
+}
+.nav-icon {
+  width: 44px; height: 44px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; transition: all 0.2s;
+}
+.nav-item.active .nav-icon { background: var(--purple-light); }
+.nav-label {
+  font-size: 11px; color: var(--muted); font-weight: 500;
+}
+.nav-item.active .nav-label { color: var(--purple); }
+
+/* ─── HOME PAGE ─── */
+#homePage { background: var(--sand); padding-bottom: 80px; }
+.home-header {
+  background: white; padding: 52px 24px 24px;
+  border-bottom: 1px solid var(--border);
+}
+.home-greeting {
+  font-family: 'Syne', sans-serif;
+  font-size: 28px; font-weight: 800; color: var(--dark);
+  margin-bottom: 4px;
+}
+.home-greeting span { color: var(--purple); }
+.home-location {
+  display: flex; align-items: center; gap: 6px;
+  color: var(--muted); font-size: 14px; margin-bottom: 20px;
+}
+.search-bar {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--sand); border: 1.5px solid var(--border);
+  border-radius: 16px; padding: 14px 18px;
+  cursor: pointer; transition: all 0.2s;
+}
+.search-bar:hover { border-color: var(--purple-mid); }
+.search-bar input {
+  border: none; background: none; outline: none;
+  font-family: 'DM Sans', sans-serif; font-size: 15px;
+  color: var(--text); flex: 1;
+}
+.search-bar input::placeholder { color: var(--muted); }
+
+.section-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 18px; font-weight: 700; color: var(--dark);
+  padding: 24px 24px 16px;
+}
+
+/* Category pills */
+.category-scroll {
+  display: flex; gap: 10px;
+  padding: 0 24px 20px;
+  overflow-x: auto;
+}
+.category-scroll::-webkit-scrollbar { display: none; }
+.cat-pill {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 18px; border-radius: 50px;
+  background: white; border: 1.5px solid var(--border);
+  white-space: nowrap; cursor: pointer; transition: all 0.2s;
+  font-size: 14px; font-weight: 500; color: var(--text);
+}
+.cat-pill.active, .cat-pill:hover {
+  background: var(--purple); border-color: var(--purple);
+  color: white;
+}
+
+/* Place cards */
+.places-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 16px; padding: 0 24px 24px;
+}
+.place-card {
+  background: white; border-radius: 20px;
+  overflow: hidden; box-shadow: var(--shadow);
+  cursor: pointer; transition: all 0.25s;
+  border: 1px solid var(--border);
+}
+.place-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+.place-img {
+  width: 100%; height: 140px; object-fit: cover;
+  background: var(--purple-light);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 32px;
+}
+.place-img img { width: 100%; height: 100%; object-fit: cover; }
+.place-info { padding: 14px; }
+.place-name {
+  font-family: 'Syne', sans-serif;
+  font-size: 14px; font-weight: 700; color: var(--dark);
+  margin-bottom: 4px;
+  display: -webkit-box; -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical; overflow: hidden;
+}
+.place-city { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+.place-meta {
+  display: flex; justify-content: space-between; align-items: center;
+}
+.place-rating {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 13px; font-weight: 500; color: var(--gold);
+}
+.place-price {
+  font-size: 12px; font-weight: 500;
+  padding: 3px 8px; border-radius: 20px;
+  background: var(--purple-light); color: var(--purple);
+}
+
+/* Category emoji map */
+.cat-emoji { font-size: 20px; }
+
+/* ─── PROFILE PAGE ─── */
+#profilePage { background: var(--sand); padding-bottom: 80px; }
+.profile-header {
+  background: linear-gradient(160deg, var(--dark), var(--purple-dark));
+  padding: 52px 24px 32px; text-align: center;
+}
+.profile-avatar {
+  width: 80px; height: 80px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--purple), var(--gold));
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 700;
+  color: white; margin: 0 auto 16px;
+  border: 3px solid rgba(255,255,255,0.3);
+}
+.profile-name {
+  font-family: 'Syne', sans-serif;
+  font-size: 22px; font-weight: 700; color: white;
+}
+.profile-email { color: rgba(255,255,255,0.6); font-size: 14px; margin-top: 4px; }
+.profile-stats {
+  display: flex; gap: 0;
+  background: white; margin: 0 24px;
+  border-radius: 16px; overflow: hidden;
+  box-shadow: var(--shadow); margin-top: -20px;
+}
+.stat-item {
+  flex: 1; text-align: center; padding: 20px 8px;
+  border-right: 1px solid var(--border);
+}
+.stat-item:last-child { border-right: none; }
+.stat-num {
+  font-family: 'Syne', sans-serif;
+  font-size: 22px; font-weight: 800; color: var(--purple);
+}
+.stat-label { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+.menu-section { padding: 24px; }
+.menu-title {
+  font-size: 12px; font-weight: 500; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 1px;
+  margin-bottom: 12px;
+}
+.menu-item {
+  display: flex; align-items: center; gap: 16px;
+  background: white; border-radius: 16px; padding: 16px 18px;
+  margin-bottom: 10px; cursor: pointer; transition: all 0.2s;
+  border: 1px solid var(--border);
+}
+.menu-item:hover { background: var(--purple-light); border-color: var(--purple-mid); }
+.menu-icon {
+  width: 42px; height: 42px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; background: var(--purple-light);
+}
+.menu-text { flex: 1; }
+.menu-text strong { display: block; font-size: 15px; color: var(--dark); }
+.menu-text span { font-size: 13px; color: var(--muted); }
+.menu-arrow { color: var(--muted); font-size: 18px; }
+
+.btn-signout {
+  width: 100%; padding: 16px;
+  background: white; border: 1.5px solid var(--border);
+  border-radius: 14px; color: #E74C3C;
+  font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500;
+  cursor: pointer; transition: all 0.2s; margin-top: 8px;
+}
+.btn-signout:hover { background: #FFF0EE; border-color: #E74C3C; }
+
+/* ─── MODAL (place detail) ─── */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(26,22,40,0.7);
+  backdrop-filter: blur(4px);
+  z-index: 200; display: none;
+  align-items: flex-end;
+}
+.modal-overlay.open { display: flex; }
+.modal-sheet {
+  background: white; width: 100%;
+  border-radius: 28px 28px 0 0;
+  max-height: 85vh; overflow-y: auto;
+  animation: slideUp 0.3s ease;
+}
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+.modal-img {
+  width: 100%; height: 240px; object-fit: cover;
+  background: var(--purple-light);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 48px;
+}
+.modal-img img { width: 100%; height: 100%; object-fit: cover; }
+.modal-body { padding: 24px; }
+.modal-cat {
+  display: inline-block; padding: 5px 14px;
+  background: var(--purple-light); color: var(--purple);
+  border-radius: 50px; font-size: 12px; font-weight: 500;
+  margin-bottom: 12px; text-transform: capitalize;
+}
+.modal-name {
+  font-family: 'Syne', sans-serif;
+  font-size: 22px; font-weight: 800; color: var(--dark);
+  margin-bottom: 8px;
+}
+.modal-meta {
+  display: flex; align-items: center; gap: 16px;
+  margin-bottom: 16px; flex-wrap: wrap;
+}
+.modal-meta-item {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 14px; color: var(--muted);
+}
+.modal-desc {
+  font-size: 15px; line-height: 1.7; color: var(--text);
+  margin-bottom: 20px;
+}
+.modal-tags {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  margin-bottom: 24px;
+}
+.modal-tag {
+  padding: 6px 14px; border-radius: 50px;
+  background: var(--sand); font-size: 12px; color: var(--muted);
+  text-transform: capitalize;
+}
+.btn-close {
+  position: absolute; top: 20px; right: 20px;
+  width: 36px; height: 36px; border-radius: 50%;
+  background: rgba(255,255,255,0.9);
+  border: none; font-size: 18px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+/* ─── SPINNER ─── */
+.spinner-overlay {
+  position: fixed; inset: 0;
+  background: rgba(26,22,40,0.6);
+  display: none; align-items: center; justify-content: center;
+  z-index: 300;
+}
+.spinner-overlay.show { display: flex; }
+.spinner {
+  width: 48px; height: 48px;
+  border: 4px solid rgba(255,255,255,0.2);
+  border-top-color: white; border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ─── TOAST ─── */
+.toast {
+  position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%);
+  background: var(--dark); color: white;
+  padding: 12px 24px; border-radius: 50px;
+  font-size: 14px; z-index: 400;
+  opacity: 0; transition: opacity 0.3s;
+  pointer-events: none; white-space: nowrap;
+}
+.toast.show { opacity: 1; }
+
+/* ─── EMPTY STATE ─── */
+.empty-state {
+  text-align: center; padding: 60px 24px;
+  display: none;
+}
+.empty-state.show { display: block; }
+.empty-icon { font-size: 48px; margin-bottom: 16px; }
+.empty-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 18px; font-weight: 700; color: var(--dark);
+  margin-bottom: 8px;
+}
+.empty-text { color: var(--muted); font-size: 14px; }
+
+/* Loading skeleton */
+.skeleton {
+  background: linear-gradient(90deg, #f0eef8 25%, #e0ddf0 50%, #f0eef8 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 12px;
+}
+@keyframes shimmer { to { background-position: -200% 0; } }
+.skel-card { height: 220px; border-radius: 20px; margin-bottom: 0; }
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 400px) {
+  .places-grid { grid-template-columns: 1fr; }
+  .login-card { padding: 36px 24px; }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<!-- SPINNER -->
+<div class="spinner-overlay" id="spinner"><div class="spinner"></div></div>
+<div class="toast" id="toast"></div>
+
+<!-- ════════════════ LOGIN PAGE ════════════════ -->
+<div class="page active" id="loginPage">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="logo-icon">🧭</div>
+      <h1>Terhal</h1>
+      <p>Smart Tourism Guide — Saudi Arabia</p>
+    </div>
+
+    <div class="login-tabs">
+      <button class="tab-btn active" onclick="switchTab('login')">Sign In</button>
+      <button class="tab-btn" onclick="switchTab('register')">Register</button>
+    </div>
+
+    <div id="loginForm">
+      <div class="error-msg" id="loginError"></div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input class="form-input" type="email" id="loginEmail" placeholder="your@email.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input class="form-input" type="password" id="loginPass" placeholder="••••••••">
+      </div>
+      <button class="btn-primary" onclick="doLogin()">Sign In</button>
+    </div>
+
+    <div id="registerForm" style="display:none">
+      <div class="error-msg" id="registerError"></div>
+      <div class="form-group">
+        <label class="form-label">Username</label>
+        <input class="form-input" type="text" id="regName" placeholder="your_username">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input class="form-input" type="email" id="regEmail" placeholder="your@email.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input class="form-input" type="password" id="regPass" placeholder="••••••••">
+      </div>
+      <button class="btn-primary" onclick="doRegister()">Create Account</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ SURVEY PAGE ════════════════ -->
+<div class="page" id="surveyPage">
+  <div class="survey-header">
+    <div class="survey-progress">
+      <div class="prog-dot active" id="pd1"></div>
+      <div class="prog-dot" id="pd2"></div>
+      <div class="prog-dot" id="pd3"></div>
+    </div>
+    <h2>Tell us about your trip! 🌍</h2>
+    <p>We'll personalize places just for you</p>
+  </div>
+
+  <div class="survey-body">
+    <!-- Step 1 -->
+    <div class="survey-step active" id="step1">
+      <div class="q-label">How are you feeling today?</div>
+      <div class="options-grid" id="moodOpts">
+        <div class="option-btn" onclick="selectOpt(this,'mood','Relaxed')">😌 Relaxed</div>
+        <div class="option-btn" onclick="selectOpt(this,'mood','Adventurous')">🤩 Adventurous</div>
+        <div class="option-btn" onclick="selectOpt(this,'mood','Energetic')">⚡ Energetic</div>
+        <div class="option-btn" onclick="selectOpt(this,'mood','Calm & quiet')">🍃 Calm & quiet</div>
+      </div>
+      <div class="q-label">Who are you going with?</div>
+      <div class="options-grid" id="compOpts">
+        <div class="option-btn" onclick="selectOpt(this,'visitor_type','solo')">🧍 Solo</div>
+        <div class="option-btn" onclick="selectOpt(this,'visitor_type','family')">👨‍👩‍👧 Family</div>
+        <div class="option-btn" onclick="selectOpt(this,'visitor_type','friends')">👯 Friends</div>
+        <div class="option-btn" onclick="selectOpt(this,'visitor_type','couples')">💑 Couple</div>
+      </div>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="survey-step" id="step2">
+      <div class="q-label">When is the plan for?</div>
+      <div class="options-grid" id="timeOpts">
+        <div class="option-btn" onclick="selectOpt(this,'preferred_time','Morning')">🌅 Morning</div>
+        <div class="option-btn" onclick="selectOpt(this,'preferred_time','Afternoon')">☀️ Afternoon</div>
+        <div class="option-btn" onclick="selectOpt(this,'preferred_time','Evening')">🌆 Evening</div>
+        <div class="option-btn" onclick="selectOpt(this,'preferred_time','Late Night')">🌙 Late Night</div>
+      </div>
+      <div class="q-label">What are you in the mood for?</div>
+      <div class="options-grid" id="actOpts">
+        <div class="option-btn" onclick="selectOpt(this,'activity','Breakfast')">🍳 Breakfast</div>
+        <div class="option-btn" onclick="selectOpt(this,'activity','Lunch / Dinner')">🍽️ Lunch / Dinner</div>
+        <div class="option-btn" onclick="selectOpt(this,'activity','Coffee')">☕ Coffee</div>
+        <div class="option-btn" onclick="selectOpt(this,'activity','Shopping')">🛍️ Shopping</div>
+        <div class="option-btn" onclick="selectOpt(this,'activity','Scenic drive & views')">🏔️ Scenic drive & views</div>
+      </div>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="survey-step" id="step3">
+      <div class="q-label">Which city?</div>
+      <div class="options-grid" id="cityOpts">
+        <div class="option-btn" onclick="selectOpt(this,'city','riyadh')">🏙️ Riyadh</div>
+        <div class="option-btn" onclick="selectOpt(this,'city','jeddah')">🌊 Jeddah</div>
+        <div class="option-btn" onclick="selectOpt(this,'city','abha')">⛰️ Abha</div>
+        <div class="option-btn" onclick="selectOpt(this,'city','alula')">🏜️ AlUla</div>
+        <div class="option-btn" onclick="selectOpt(this,'city','madinah')">🕌 Madinah</div>
+      </div>
+      <div class="q-label">How much is your budget?</div>
+      <div class="budget-display">
+        <div class="budget-amount" id="budgetVal">200 <span>SAR</span></div>
+      </div>
+      <input type="range" class="budget-slider" id="budgetSlider"
+             min="50" max="500" step="10" value="200"
+             oninput="updateBudget(this.value)">
+    </div>
+  </div>
+
+  <div class="survey-footer">
+    <button class="btn-skip" onclick="skipSurvey()">Skip</button>
+    <button class="btn-back" id="backBtn" onclick="surveyBack()" style="display:none">← Back</button>
+    <button class="btn-next" id="nextBtn" onclick="surveyNext()">Continue →</button>
+  </div>
+</div>
+
+<!-- ════════════════ HOME PAGE ════════════════ -->
+<div class="page" id="homePage">
+  <div class="home-header">
+    <div class="home-greeting">Hello, <span id="greetName">Traveller</span> 👋</div>
+    <div class="home-location">📍 <span id="locationText">Saudi Arabia</span></div>
+    <div class="search-bar">
+      <span>🔍</span>
+      <input type="text" placeholder="Search destinations, cafes..." id="searchInput" oninput="filterPlaces(this.value)">
+    </div>
+  </div>
+
+  <div class="section-title">Explore by category</div>
+  <div class="category-scroll" id="catScroll">
+    <div class="cat-pill active" onclick="filterCat('all',this)">✨ All</div>
+    <div class="cat-pill" onclick="filterCat('restaurant',this)">🍽️ Restaurants</div>
+    <div class="cat-pill" onclick="filterCat('cafe',this)">☕ Cafes</div>
+    <div class="cat-pill" onclick="filterCat('attraction',this)">🏛️ Attractions</div>
+    <div class="cat-pill" onclick="filterCat('park',this)">🌿 Parks</div>
+    <div class="cat-pill" onclick="filterCat('shopping',this)">🛍️ Shopping</div>
+    <div class="cat-pill" onclick="filterCat('entertainment',this)">🎭 Entertainment</div>
+  </div>
+
+  <div class="section-title" id="sectionTitle">Recommended for You</div>
+  <div class="places-grid" id="placesGrid"></div>
+  <div class="empty-state" id="emptyState">
+    <div class="empty-icon">🔍</div>
+    <div class="empty-title">No places found</div>
+    <div class="empty-text">Try a different search or category</div>
+  </div>
+
+  <div class="bottom-nav">
+    <button class="nav-item active" onclick="showPage('home')">
+      <div class="nav-icon">🧭</div>
+      <span class="nav-label">Explore</span>
+    </button>
+    <button class="nav-item" onclick="showPage('profile')">
+      <div class="nav-icon">👤</div>
+      <span class="nav-label">Profile</span>
+    </button>
+  </div>
+</div>
+
+<!-- ════════════════ PROFILE PAGE ════════════════ -->
+<div class="page" id="profilePage">
+  <div class="profile-header">
+    <div class="profile-avatar" id="profileAvatar">T</div>
+    <div class="profile-name" id="profileName">Traveller</div>
+    <div class="profile-email" id="profileEmail">—</div>
+  </div>
+
+  <div class="profile-stats">
+    <div class="stat-item">
+      <div class="stat-num">0</div>
+      <div class="stat-label">Followers</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">0</div>
+      <div class="stat-label">Lists</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">0</div>
+      <div class="stat-label">Following</div>
+    </div>
+  </div>
+
+  <div class="menu-section">
+    <div class="menu-title">My Activity</div>
+    <div class="menu-item">
+      <div class="menu-icon">🕐</div>
+      <div class="menu-text">
+        <strong>History</strong>
+        <span>My trips / My bookings</span>
+      </div>
+      <span class="menu-arrow">›</span>
+    </div>
+    <div class="menu-item">
+      <div class="menu-icon">❤️</div>
+      <div class="menu-text">
+        <strong>Favorites</strong>
+        <span>Saved places and tours</span>
+      </div>
+      <span class="menu-arrow">›</span>
+    </div>
+
+    <div class="menu-title" style="margin-top:20px">My Lists</div>
+    <div id="listsContainer" style="margin-bottom:12px"></div>
+    <div style="background:white;border:1.5px dashed var(--border);border-radius:16px;padding:16px 18px;margin-bottom:10px;">
+      <input type="text" id="listTitle" placeholder="List title..." style="width:100%;border:none;outline:none;font-family:'DM Sans',sans-serif;font-size:15px;color:var(--text);margin-bottom:10px;background:none;">
+      <textarea id="listText" placeholder="Add notes..." style="width:100%;border:none;outline:none;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--muted);resize:none;height:60px;background:none;"></textarea>
+      <button onclick="createList()" style="background:var(--purple);color:white;border:none;border-radius:50px;padding:10px 24px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;margin-top:8px;">+ Create List</button>
+    </div>
+
+    <div class="menu-title" style="margin-top:20px">Preferences</div>
+    <div class="menu-item" onclick="goToSurvey()">
+      <div class="menu-icon">🎯</div>
+      <div class="menu-text">
+        <strong>Update Preferences</strong>
+        <span>Retake the survey</span>
+      </div>
+      <span class="menu-arrow">›</span>
+    </div>
+    <div class="menu-item">
+      <div class="menu-icon">⚙️</div>
+      <div class="menu-text">
+        <strong>Settings</strong>
+        <span>Language, notifications, more</span>
+      </div>
+      <span class="menu-arrow">›</span>
+    </div>
+    <div class="menu-item">
+      <div class="menu-icon">🌙</div>
+      <div class="menu-text">
+        <strong>Night mode</strong>
+        <span>Switch between light and dark</span>
+      </div>
+      <span class="menu-arrow">›</span>
+    </div>
+
+    <button class="btn-signout" onclick="doSignOut()">Sign Out</button>
+  </div>
+
+  <div class="bottom-nav">
+    <button class="nav-item" onclick="showPage('home')">
+      <div class="nav-icon">🧭</div>
+      <span class="nav-label">Explore</span>
+    </button>
+    <button class="nav-item active" onclick="showPage('profile')">
+      <div class="nav-icon">👤</div>
+      <span class="nav-label">Profile</span>
+    </button>
+  </div>
+</div>
+
+<!-- ════════════════ PLACE MODAL ════════════════ -->
+<div class="modal-overlay" id="placeModal" onclick="closeModal(event)">
+  <div class="modal-sheet" style="position:relative">
+    <button class="btn-close" onclick="closeModal()">✕</button>
+    <div class="modal-img" id="modalImg"></div>
+    <div class="modal-body">
+      <div class="modal-cat" id="modalCat"></div>
+      <div class="modal-name" id="modalName"></div>
+      <div class="modal-meta">
+        <div class="modal-meta-item">⭐ <span id="modalRating"></span></div>
+        <div class="modal-meta-item">📍 <span id="modalCity"></span></div>
+        <div class="modal-meta-item">💰 <span id="modalPrice"></span></div>
+        <div class="modal-meta-item">🕐 <span id="modalEnv"></span></div>
+      </div>
+      <div class="modal-desc" id="modalDesc"></div>
+      <div class="modal-tags" id="modalTags"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = 'http://192.168.100.210:8000';
+
+// ─── STATE ───
+let state = {
+  user: null,
+  survey: {},
+  allPlaces: [],
+  filtered: [],
+  currentStep: 1,
+  currentPage: 'login'
+};
+
+// ─── UTILS ───
+function showSpinner(v) {
+  document.getElementById('spinner').classList.toggle('show', v);
+}
+function showToast(msg, dur=2500) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), dur);
+}
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(name+'Page').classList.add('active');
+  state.currentPage = name;
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (name === 'profile') renderLists();
+}
+function showErr(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg; el.style.display = 'block';
+}
+function hideErr(id) { document.getElementById(id).style.display = 'none'; }
+
+// ─── AUTH TABS ───
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach((b,i) =>
+    b.classList.toggle('active', (i===0&&tab==='login')||(i===1&&tab==='register'))
+  );
+  document.getElementById('loginForm').style.display = tab==='login' ? '' : 'none';
+  document.getElementById('registerForm').style.display = tab==='register' ? '' : 'none';
+  hideErr('loginError'); hideErr('registerError');
+}
+
+// ─── LOGIN ───
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass = document.getElementById('loginPass').value;
+  if (!email || !pass) { showErr('loginError','Please fill all fields'); return; }
+  hideErr('loginError'); showSpinner(true);
+  try {
+    const res = await fetch(API+'/users/login', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({email, password:pass})
+    });
+    const data = await res.json();
+    if (data.error) { showErr('loginError', data.error); return; }
+    state.user = data.user;
+    localStorage.setItem('terhal_user', JSON.stringify(data.user));
+    afterLogin();
+  } catch(e) {
+    showErr('loginError','Connection error. Is the server running?');
+  } finally { showSpinner(false); }
+}
+
+// ─── REGISTER ───
+async function doRegister() {
+  const username = document.getElementById('regName').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const pass = document.getElementById('regPass').value;
+  if (!username||!email||!pass) { showErr('registerError','Please fill all fields'); return; }
+  hideErr('registerError'); showSpinner(true);
+  try {
+    const res = await fetch(API+'/users/register', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({username, email, password:pass})
+    });
+    const data = await res.json();
+    if (data.error) { showErr('registerError', data.error); return; }
+    showToast('Account created! Please sign in.');
+    switchTab('login');
+    document.getElementById('loginEmail').value = email;
+  } catch(e) {
+    showErr('registerError','Connection error. Is the server running?');
+  } finally { showSpinner(false); }
+}
+
+// ─── AFTER LOGIN ───
+function afterLogin() {
+  const u = state.user;
+  if (u?.preferences && Object.keys(u.preferences).length > 0) {
+    state.survey = u.preferences;
+    goHome();
+  } else {
+    showPage('survey');
+  }
+}
+
+// ─── SURVEY ───
+let surveyStep = 1;
+function updateProgress() {
+  for(let i=1;i<=3;i++) {
+    const d = document.getElementById('pd'+i);
+    d.className = 'prog-dot' + (i===surveyStep?' active':i<surveyStep?' done':'');
+  }
+  document.getElementById('backBtn').style.display = surveyStep > 1 ? '' : 'none';
+  document.getElementById('nextBtn').textContent = surveyStep === 3 ? 'Done ✓' : 'Continue →';
+}
+
+function selectOpt(el, key, val) {
+  el.closest('.options-grid').querySelectorAll('.option-btn')
+    .forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  state.survey[key] = val;
+}
+
+function updateBudget(v) {
+  document.getElementById('budgetVal').innerHTML = v+' <span>SAR</span>';
+  const slider = document.getElementById('budgetSlider');
+  const pct = ((v-50)/(500-50))*100;
+  slider.style.background = `linear-gradient(to right, var(--purple) 0%, var(--purple) ${pct}%, var(--border) ${pct}%)`;
+  state.survey.budget = v < 150 ? '$' : v < 350 ? '$$' : '$$$';
+}
+
+function surveyNext() {
+  if (surveyStep < 3) {
+    document.getElementById('step'+surveyStep).classList.remove('active');
+    surveyStep++;
+    document.getElementById('step'+surveyStep).classList.add('active');
+    updateProgress();
+  } else {
+    submitSurvey();
+  }
+}
+function surveyBack() {
+  if (surveyStep > 1) {
+    document.getElementById('step'+surveyStep).classList.remove('active');
+    surveyStep--;
+    document.getElementById('step'+surveyStep).classList.add('active');
+    updateProgress();
+  }
+}
+function skipSurvey() { goHome(); }
+
+async function submitSurvey() {
+  if (!state.user) { goHome(); return; }
+  showSpinner(true);
+  try {
+    const id = state.user._id || state.user.id;
+    await fetch(API+'/users/'+id+'/preferences', {
+      method:'PUT', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        mood: state.survey.mood || null,
+        visitor_type: state.survey.visitor_type || null,
+        preferred_time: state.survey.preferred_time || null,
+        activity: state.survey.activity || null,
+        city: state.survey.city || null,
+        budget: state.survey.budget || null,
+        environment: null
+      })
+    });
+  } catch(e) { console.log('Survey save failed', e); }
+  finally { showSpinner(false); }
+  goHome();
+}
+
+// ─── HOME ───
+async function goHome() {
+  showPage('home');
+  const u = state.user;
+  if (u) {
+    const name = u.username || u.email?.split('@')[0] || 'Traveller';
+    document.getElementById('greetName').textContent = name;
+    document.getElementById('profileName').textContent = name;
+    document.getElementById('profileEmail').textContent = u.email || '';
+    document.getElementById('profileAvatar').textContent = name[0].toUpperCase();
+    const city = state.survey?.city;
+    if (city) document.getElementById('locationText').textContent =
+      city.charAt(0).toUpperCase()+city.slice(1)+', Saudi Arabia';
+  }
+  await loadPlaces();
+}
+
+async function loadPlaces() {
+  const grid = document.getElementById('placesGrid');
+  grid.innerHTML = Array(6).fill('<div class="skeleton skel-card"></div>').join('');
+  document.getElementById('emptyState').classList.remove('show');
+
+  try {
+    const id = state.user?._id || state.user?.id;
+    const s = state.survey;
+
+    let places = [];
+
+    if (id) {
+      // Use recommend endpoint with filters
+      let url = API+'/recommend/'+id+'?top_n=50';
+      if (s.city) url += '&city='+encodeURIComponent(s.city);
+      if (s.visitor_type) url += '&visitor_type='+encodeURIComponent(s.visitor_type);
+      if (s.preferred_time) url += '&preferred_time='+encodeURIComponent(s.preferred_time);
+      if (s.budget) url += '&budget='+encodeURIComponent(s.budget);
+
+      const res = await fetch(url);
+      const data = await res.json();
+      places = data.recommendations || [];
+    }
+
+    // If no recommendations or no user, fallback to destinations filtered by city
+    if (places.length === 0) {
+      let url = API+'/destinations/search?';
+      if (s.city) url += 'city='+encodeURIComponent(s.city);
+      const res = await fetch(url);
+      const data = await res.json();
+      places = data.data || [];
+    }
+
+    // Final fallback — all destinations
+    if (places.length === 0) {
+      const res = await fetch(API+'/destinations/');
+      const data = await res.json();
+      places = data.data || [];
+    }
+
+    state.allPlaces = places;
+    state.filtered = [...places];
+    renderPlaces(state.filtered);
+
+    // Update location text
+    if (s.city) {
+      document.getElementById('locationText').textContent =
+        s.city.charAt(0).toUpperCase()+s.city.slice(1)+', Saudi Arabia';
+    }
+
+  } catch(e) {
+    grid.innerHTML = '';
+    document.getElementById('emptyState').classList.add('show');
+    document.querySelector('#emptyState .empty-title').textContent = 'Server unavailable';
+    document.querySelector('#emptyState .empty-text').textContent = 'Please make sure the backend is running';
+  }
+}
+
+const CAT_EMOJI = {
+  restaurant:'🍽️', cafe:'☕', attraction:'🏛️',
+  park:'🌿', shopping:'🛍️', entertainment:'🎭'
+};
+
+function renderPlaces(places) {
+  const grid = document.getElementById('placesGrid');
+  const empty = document.getElementById('emptyState');
+  if (!places.length) {
+    grid.innerHTML = ''; empty.classList.add('show'); return;
+  }
+  empty.classList.remove('show');
+  grid.innerHTML = places.slice(0,30).map(p => {
+    const emoji = CAT_EMOJI[p.category] || '📍';
+    const hasImg = p.photo_url && !p.photo_url.includes('placeholder');
+    return `
+    <div class="place-card" onclick='openPlace(${JSON.stringify(p).replace(/'/g,"&#39;")})'>
+      <div class="place-img">
+        ${hasImg
+          ? `<img src="${p.photo_url}" alt="${p.name}" onerror="this.parentNode.innerHTML='${emoji}'" loading="lazy">`
+          : `<span style="font-size:36px">${emoji}</span>`
+        }
+      </div>
+      <div class="place-info">
+        <div class="place-name">${p.name}</div>
+        <div class="place-city">${p.city || ''}</div>
+        <div class="place-meta">
+          <span class="place-rating">⭐ ${(p.rating||0).toFixed(1)}</span>
+          <span class="place-price">${p.prices||'$'}</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function filterCat(cat, el) {
+  document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  if (cat === 'all') {
+    state.filtered = [...state.allPlaces];
+    document.getElementById('sectionTitle').textContent = 'Recommended for You';
+  } else {
+    state.filtered = state.allPlaces.filter(p => p.category === cat);
+    document.getElementById('sectionTitle').textContent =
+      CAT_EMOJI[cat]+' '+cat.charAt(0).toUpperCase()+cat.slice(1)+'s';
+  }
+  const q = document.getElementById('searchInput').value;
+  if (q) filterPlaces(q);
+  else renderPlaces(state.filtered);
+}
+
+function filterPlaces(q) {
+  if (!q) { renderPlaces(state.filtered); return; }
+  const qL = q.toLowerCase();
+  const res = state.filtered.filter(p =>
+    p.name?.toLowerCase().includes(qL) ||
+    p.city?.toLowerCase().includes(qL) ||
+    p.category?.toLowerCase().includes(qL) ||
+    p.description?.toLowerCase().includes(qL)
+  );
+  renderPlaces(res);
+}
+
+// ─── PLACE MODAL ───
+function openPlace(p) {
+  const emoji = CAT_EMOJI[p.category] || '📍';
+  const hasImg = p.photo_url && !p.photo_url.includes('placeholder');
+  document.getElementById('modalImg').innerHTML = hasImg
+    ? `<img src="${p.photo_url}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentNode.innerHTML='${emoji}'">`
+    : `<span style="font-size:48px">${emoji}</span>`;
+  document.getElementById('modalCat').textContent = p.category || '';
+  document.getElementById('modalName').textContent = p.name || '';
+  document.getElementById('modalRating').textContent = (p.rating||0).toFixed(1)+' ('+((p.reviews||0).toLocaleString())+' reviews)';
+  document.getElementById('modalCity').textContent = p.city || '';
+  document.getElementById('modalPrice').textContent = p.prices || '$';
+  document.getElementById('modalEnv').textContent = p.environment || '';
+  document.getElementById('modalDesc').textContent = p.description || '';
+  const tags = (p.tags||'').split(',').filter(Boolean);
+  document.getElementById('modalTags').innerHTML = tags.slice(0,8).map(t=>
+    `<span class="modal-tag">${t.trim()}</span>`
+  ).join('');
+  document.getElementById('placeModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal(e) {
+  if (!e || e.target === document.getElementById('placeModal') || e.target.classList.contains('btn-close')) {
+    document.getElementById('placeModal').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+}
+
+// ─── PROFILE ───
+function goToSurvey() {
+  surveyStep = 1;
+  document.querySelectorAll('.survey-step').forEach((s,i) =>
+    s.classList.toggle('active', i===0));
+  updateProgress();
+  showPage('survey');
+}
+
+function doSignOut() {
+  state.user = null; state.survey = {}; state.allPlaces = [];
+  localStorage.removeItem('terhal_user');
+  showPage('login');
+  showToast('Signed out successfully');
+}
+
+// ─── INIT ───
+// ─── LISTS ───
+function createList() {
+  const title = document.getElementById('listTitle').value.trim();
+  const text = document.getElementById('listText').value.trim();
+  if (!title) { showToast('Please add a title'); return; }
+
+  const lists = JSON.parse(localStorage.getItem('terhal_lists') || '[]');
+  lists.unshift({ id: Date.now(), title, text, date: new Date().toLocaleDateString() });
+  localStorage.setItem('terhal_lists', JSON.stringify(lists));
+
+  document.getElementById('listTitle').value = '';
+  document.getElementById('listText').value = '';
+  renderLists();
+  showToast('List created! ✓');
+}
+
+function renderLists() {
+  const lists = JSON.parse(localStorage.getItem('terhal_lists') || '[]');
+  const container = document.getElementById('listsContainer');
+  if (!lists.length) { container.innerHTML = ''; return; }
+  container.innerHTML = lists.map(l => `
+    <div style="background:white;border:1px solid var(--border);border-radius:16px;padding:16px 18px;margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div>
+          <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--dark);">${l.title}</div>
+          ${l.text ? `<div style="font-size:13px;color:var(--muted);margin-top:6px;line-height:1.5;">${l.text}</div>` : ''}
+          <div style="font-size:11px;color:var(--border);margin-top:8px;">${l.date}</div>
+        </div>
+        <button onclick="deleteList(${l.id})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;padding:0 0 0 12px;">✕</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function deleteList(id) {
+  let lists = JSON.parse(localStorage.getItem('terhal_lists') || '[]');
+  lists = lists.filter(l => l.id !== id);
+  localStorage.setItem('terhal_lists', JSON.stringify(lists));
+  renderLists();
+}
+
+window.addEventListener('load', () => {
+  const saved = localStorage.getItem('terhal_user');
+  if (saved) {
+    try {
+      state.user = JSON.parse(saved);
+      if (state.user?.preferences) state.survey = state.user.preferences;
+      afterLogin();
+    } catch(e) { localStorage.removeItem('terhal_user'); }
+  }
+  // Enter key for login
+  document.getElementById('loginPass').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doLogin();
+  });
+  document.getElementById('regPass').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doRegister();
+  });
+});
+</script>
+</body>
+</html>

@@ -1,8 +1,10 @@
-cat > /Users/rere/terhal/mobile/lib/screens/login_screen.dart << 'EOF'
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+
+const String baseUrl = 'http://10.0.2.2:8000';
+
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -12,14 +14,15 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final String baseUrl = 'http://10.0.2.2:8000';
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
   bool _obscurePassword = true;
+
   static const Color _purple = Color(0xFF6B5EA8);
 
   Future<void> _login() async {
+  
     if (_emailController.text.trim().isEmpty ||
         _passwordController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -27,6 +30,7 @@ class _LoginScreenState extends State<LoginScreen> {
       );
       return;
     }
+
     setState(() => _isLoading = true);
     try {
       final response = await http.post(
@@ -37,18 +41,24 @@ class _LoginScreenState extends State<LoginScreen> {
           'password': _passwordController.text,
         }),
       );
+
       final data = jsonDecode(response.body);
+
       if (data['error'] != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(data['error'])),
         );
       } else {
         final prefs = await SharedPreferences.getInstance();
+
+       
         final user = data['user'];
         final userId = user['_id'] ?? user['id'] ?? '';
         final username = user['username'] ?? user['name'] ?? '';
+
         await prefs.setString('user_id', userId);
         await prefs.setString('username', username);
+
         if (mounted) {
           Navigator.pushReplacementNamed(context, '/survey');
         }
@@ -76,6 +86,7 @@ class _LoginScreenState extends State<LoginScreen> {
         child: SingleChildScrollView(
           child: Column(
             children: [
+             
               Container(
                 width: double.infinity,
                 height: 220,
@@ -89,6 +100,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                    
                     Container(
                       width: 80,
                       height: 80,
@@ -114,12 +126,18 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const Text(
                       'ترحال',
-                      style: TextStyle(color: Colors.white70, fontSize: 16),
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 16,
+                      ),
                     ),
                   ],
                 ),
               ),
+
               const SizedBox(height: 40),
+
+            
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Container(
@@ -148,13 +166,19 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 4),
                       GestureDetector(
-                        onTap: () => Navigator.pushNamed(context, '/register'),
+                        onTap: () =>
+                            Navigator.pushNamed(context, '/register'),
                         child: const Text(
-                          "Don't have an account? Sign Up",
-                          style: TextStyle(color: _purple, fontSize: 13),
+                          "you don't have account? Sign Up",
+                          style: TextStyle(
+                            color: _purple,
+                            fontSize: 13,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 24),
+
+                      // Email field
                       _buildTextField(
                         controller: _emailController,
                         label: 'Enter Your Email',
@@ -162,6 +186,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         keyboardType: TextInputType.emailAddress,
                       ),
                       const SizedBox(height: 16),
+
+                      // Password field
                       _buildTextField(
                         controller: _passwordController,
                         label: 'Password',
@@ -178,13 +204,45 @@ class _LoginScreenState extends State<LoginScreen> {
                               () => _obscurePassword = !_obscurePassword),
                         ),
                       ),
-                      const SizedBox(height: 16),
+
+                      // Remember me + Forgot password
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Checkbox(
+                                value: false,
+                                onChanged: (_) {},
+                                activeColor: _purple,
+                                materialTapTargetSize:
+                                    MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              const Text('Remember Me',
+                                  style: TextStyle(fontSize: 12)),
+                            ],
+                          ),
+                          TextButton(
+                            onPressed: () {},
+                            child: const Text(
+                              'forget your Password?',
+                              style: TextStyle(
+                                  color: _purple, fontSize: 12),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 8),
+
+                      // Log in button
                       SizedBox(
                         width: double.infinity,
                         height: 52,
                         child: _isLoading
                             ? const Center(
-                                child: CircularProgressIndicator(color: _purple))
+                                child: CircularProgressIndicator(
+                                    color: _purple))
                             : ElevatedButton(
                                 onPressed: _login,
                                 style: ElevatedButton.styleFrom(
@@ -249,4 +307,3 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
-EOF
