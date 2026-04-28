@@ -6,7 +6,7 @@ router = APIRouter(prefix="/destinations", tags=["destinations"])
 @router.get("/")
 async def get_all_destinations():
     # Use to_list(length=None) to get all results asynchronously
-places = list(destinations_collection.find({}, {"_id": 0}))ظ    places = await destinations_collection.find({}, {"_id": 0}).to_list(length=None)
+places = list(destinations_collection.find({}, {"_id": 0}))    places = await destinations_collection.find({}, {"_id": 0}).to_list(length=None)
     return {"count": len(places), "data": places}
 
 @router.get("/search")
