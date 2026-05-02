@@ -1,7 +1,8 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 
 class ListItem(BaseModel):
     user_id: str
-    destination_id: str
-    list_name: Optional[str] = "My List"
+    list_name: str = "My List"
+    destination_id: Optional[str] = None
+    places: Optional[List[str]] = []

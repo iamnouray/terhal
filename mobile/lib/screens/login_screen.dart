@@ -60,7 +60,13 @@ class _LoginScreenState extends State<LoginScreen> {
         await prefs.setString('username', username);
 
         if (mounted) {
-          Navigator.pushReplacementNamed(context, '/survey');
+          final hasPrefs = user['preferences'] != null;
+if (mounted) {
+  Navigator.pushReplacementNamed(
+    context,
+    hasPrefs ? '/home' : '/survey',
+  );
+}
         }
       }
     } catch (e) {

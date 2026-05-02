@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routes import destinations, users, recommendations, likes, reviews
+from routes import destinations, users, recommendations, likes, reviews, lists
 from database import check_db_connection
 
 app = FastAPI(title="Terhal API")
@@ -20,12 +20,12 @@ async def startup_db_client():
     await check_db_connection()
 
 # Include Routers
-# Note: Ensure that your login logic is inside the 'users' router
 app.include_router(destinations.router)
 app.include_router(users.router)
 app.include_router(recommendations.router)
 app.include_router(likes.router)
 app.include_router(reviews.router)
+app.include_router(lists.router)
 
 @app.get("/")
 async def root():

@@ -34,7 +34,7 @@ List<Widget> get _pages => [
         onDestinationSelected: (i) => setState(() => _currentIndex = i),
         backgroundColor: Colors.white,
         indicatorColor: const Color(0xFF6B5EA8).withOpacity(0.12),
-        destinations: [
+        destinations: const [
           NavigationDestination(
             icon: Icon(Icons.home_outlined),
             selectedIcon: Icon(Icons.home, color: Color(0xFF6B5EA8)),
@@ -46,10 +46,10 @@ List<Widget> get _pages => [
             label: 'Search',
           ),
           NavigationDestination(
-  icon: Icon(Icons.person_outlined),
-  selectedIcon: Icon(Icons.person, color: Color(0xFF6B5EA8)),
-  label: 'Profile',
-),
+            icon: Icon(Icons.person_outlined),
+            selectedIcon: Icon(Icons.person, color: Color(0xFF6B5EA8)),
+            label: 'Profile',
+          ),
         ],
       ),
     );
@@ -79,11 +79,9 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Map<String, dynamic>> _recommendations = [];
   bool _isLoading = true;
 
-  // Mood filter chips
   final List<String> _moods = ['All', 'Relaxed', 'Adventurous', 'Energetic', 'Calm & quiet'];
   int _selectedMood = 0;
 
-  // Category icons
   final Map<String, IconData> _categoryIcons = {
     'restaurant': Icons.restaurant,
     'cafe': Icons.coffee,
@@ -103,24 +101,29 @@ class _HomeScreenState extends State<HomeScreen> {
     final prefs = await SharedPreferences.getInstance();
     _username = prefs.getString('username') ?? 'Explorer';
     _userId = prefs.getString('user_id') ?? '';
+    print('Loaded userId: $_userId'); // ← تعديل هنا
     await _fetchRecommendations();
   }
 
   Future<void> _fetchRecommendations() async {
     setState(() => _isLoading = true);
     try {
+      print('Fetching recommendations for: $_userId'); // ← تعديل هنا
       final uri = Uri.parse('$kBaseUrl/recommend/$_userId?top_n=10');
       final res = await http.get(uri);
+      print('Status: ${res.statusCode}'); // ← تعديل هنا
+      print('Body: ${res.body.substring(0, 200)}'); // ← تعديل هنا
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         setState(() {
-         _recommendations = List<Map<String, dynamic>>.from(
-  data is List ? data : (data['recommendations'] ?? []),
-);
+          _recommendations = List<Map<String, dynamic>>.from(
+            data is List ? data : (data['recommendations'] ?? []),
+          );
         });
+        print('Loaded ${_recommendations.length} recommendations'); // ← تعديل هنا
       }
-    } catch (_) {
-      // fallback — show empty state
+    } catch (e) {
+      print('Recommendations error: $e'); // ← تعديل هنا
     }
     setState(() => _isLoading = false);
   }
@@ -133,7 +136,6 @@ class _HomeScreenState extends State<HomeScreen> {
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
-            // ── Header ─────────────────────────────
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
@@ -178,11 +180,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ),
                     const SizedBox(height: 20),
-                    // Search bar shortcut
                     GestureDetector(
-                      onTap: () {
-                        // navigate to search tab
-                      },
+                      onTap: () {},
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 16,
@@ -199,8 +198,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ],
                         ),
-                        child: Row(
-                          children: const [
+                        child: const Row(
+                          children: [
                             Icon(Icons.search, color: Color(0xFF888888)),
                             SizedBox(width: 10),
                             Text(
@@ -220,7 +219,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
 
-            // ── Category Cards ──────────────────────
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -256,7 +254,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
 
-            // ── Mood Filter ─────────────────────────
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -277,7 +274,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,
                         itemCount: _moods.length,
-                        separatorBuilder: (_, _) => const SizedBox(width: 8),
+                        separatorBuilder: (_, __) => const SizedBox(width: 8),
                         itemBuilder: (context, i) {
                           final selected = _selectedMood == i;
                           return GestureDetector(
@@ -314,7 +311,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
 
-            // ── Recommendations ─────────────────────
             _isLoading
                 ? const SliverToBoxAdapter(
                     child: Padding(
@@ -325,9 +321,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   )
                 : _recommendations.isEmpty
-                    ? SliverToBoxAdapter(
-                        child: _buildEmptyState(),
-                      )
+                    ? SliverToBoxAdapter(child: _buildEmptyState())
                     : SliverPadding(
                         padding: const EdgeInsets.symmetric(horizontal: 20),
                         sliver: SliverList(
@@ -357,9 +351,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildCategoryChip(String label, IconData icon, Color color) {
     return GestureDetector(
-      onTap: () {
-        // filter by category
-      },
+      onTap: () {},
       child: Container(
         margin: const EdgeInsets.only(right: 12),
         width: 72,
@@ -410,7 +402,6 @@ class _HomeScreenState extends State<HomeScreen> {
     final time = place['preferred_time'] ?? '';
     final icon = _categoryIcons[category] ?? Icons.place;
 
-    // pick card accent color based on category
     final Color accent;
     switch (category) {
       case 'restaurant':
@@ -446,19 +437,18 @@ class _HomeScreenState extends State<HomeScreen> {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(20),
-         onTap: () {
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) => PlaceDetailsScreen(place: place),
-    ),
-  );
-},
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => PlaceDetailsScreen(place: place),
+              ),
+            );
+          },
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                // Icon thumbnail
                 Container(
                   width: 60,
                   height: 60,
@@ -469,7 +459,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Icon(icon, color: accent, size: 28),
                 ),
                 const SizedBox(width: 14),
-                // Info
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -487,85 +476,38 @@ class _HomeScreenState extends State<HomeScreen> {
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          const Icon(
-                            Icons.location_on,
-                            size: 13,
-                            color: Color(0xFF888888),
-                          ),
+                          const Icon(Icons.location_on, size: 13, color: Color(0xFF888888)),
                           const SizedBox(width: 2),
-                          Text(
-                            city,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              color: Color(0xFF888888),
-                            ),
-                          ),
+                          Text(city, style: const TextStyle(fontSize: 13, color: Color(0xFF888888))),
                           if (time.isNotEmpty) ...[
                             const SizedBox(width: 8),
-                            const Icon(
-                              Icons.access_time,
-                              size: 13,
-                              color: Color(0xFF888888),
-                            ),
+                            const Icon(Icons.access_time, size: 13, color: Color(0xFF888888)),
                             const SizedBox(width: 2),
-                            Text(
-                              time,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                color: Color(0xFF888888),
-                              ),
-                            ),
+                            Text(time, style: const TextStyle(fontSize: 13, color: Color(0xFF888888))),
                           ],
                         ],
                       ),
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          // Rating
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.star_rounded,
-                                size: 15,
-                                color: Color(0xFFFFC107),
-                              ),
-                              const SizedBox(width: 2),
-                              Text(
-                                rating.toStringAsFixed(1),
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF1A1A2E),
-                                ),
-                              ),
-                              Text(
-                                ' ($reviews)',
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: Color(0xFF888888),
-                                ),
-                              ),
-                            ],
+                          const Icon(Icons.star_rounded, size: 15, color: Color(0xFFFFC107)),
+                          const SizedBox(width: 2),
+                          Text(
+                            rating.toStringAsFixed(1),
+                            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF1A1A2E)),
                           ),
+                          Text(' ($reviews)', style: const TextStyle(fontSize: 12, color: Color(0xFF888888))),
                           const Spacer(),
-                          // Price badge
                           if (price.isNotEmpty)
                             Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 3,
-                              ),
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                               decoration: BoxDecoration(
                                 color: kPrimaryLight,
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
                                 price,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: kPrimary,
-                                ),
+                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: kPrimary),
                               ),
                             ),
                         ],
@@ -574,10 +516,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                const Icon(
-                  Icons.chevron_right,
-                  color: Color(0xFFCCCCCC),
-                ),
+                const Icon(Icons.chevron_right, color: Color(0xFFCCCCCC)),
               ],
             ),
           ),
@@ -591,19 +530,11 @@ class _HomeScreenState extends State<HomeScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
       child: Column(
         children: [
-          Icon(
-            Icons.explore_outlined,
-            size: 64,
-            color: kPrimary.withOpacity(0.3),
-          ),
+          Icon(Icons.explore_outlined, size: 64, color: kPrimary.withOpacity(0.3)),
           const SizedBox(height: 16),
           const Text(
             'No recommendations yet',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF1A1A2E),
-            ),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Color(0xFF1A1A2E)),
           ),
           const SizedBox(height: 8),
           const Text(
@@ -618,9 +549,7 @@ class _HomeScreenState extends State<HomeScreen> {
               backgroundColor: kPrimary,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
             child: const Text('Refresh'),
           ),
@@ -646,13 +575,11 @@ class _SearchScreenState extends State<SearchScreen> {
   bool _isSearching = false;
   bool _hasSearched = false;
 
-  // Filters
   String _selectedCity = 'All';
   String _selectedCategory = 'All';
   final List<String> _cities = ['All', 'Riyadh', 'Jeddah', 'Abha', 'AlUla', 'Madinah'];
   final List<String> _categories = ['All', 'Restaurant', 'Cafe', 'Park', 'Shopping', 'Museum'];
 
-  // Popular searches
   final List<String> _popular = [
     'Al-Ula Heritage',
     'Riyadh cafes',
@@ -670,16 +597,13 @@ class _SearchScreenState extends State<SearchScreen> {
     try {
       final cityParam = _selectedCity == 'All' ? '' : _selectedCity;
       final catParam = _selectedCategory == 'All' ? '' : _selectedCategory.toLowerCase();
-      final uri = Uri.parse(
-        '$kBaseUrl/destinations/search?city=$cityParam&category=$catParam',
-      );
+      final uri = Uri.parse('$kBaseUrl/destinations/search?city=$cityParam&category=$catParam');
       final res = await http.get(uri);
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         final all = List<Map<String, dynamic>>.from(
-  data is List ? data : (data['data'] ?? []),
-);
-        // Client-side filter by query text
+          data is List ? data : (data['data'] ?? []),
+        );
         final q = query.toLowerCase();
         setState(() {
           _results = all
@@ -690,7 +614,8 @@ class _SearchScreenState extends State<SearchScreen> {
               .toList();
         });
       }
-    } catch (_) {
+    } catch (e) {
+      print('Search error: $e');
       setState(() => _results = []);
     }
     setState(() => _isSearching = false);
@@ -704,7 +629,6 @@ class _SearchScreenState extends State<SearchScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Search Header ───────────────────────
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
               child: Column(
@@ -712,24 +636,15 @@ class _SearchScreenState extends State<SearchScreen> {
                 children: [
                   const Text(
                     'Discover',
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF1A1A2E),
-                    ),
+                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: Color(0xFF1A1A2E)),
                   ),
                   const SizedBox(height: 14),
-                  // Search field
                   Container(
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.06),
-                          blurRadius: 12,
-                          offset: const Offset(0, 2),
-                        ),
+                        BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 12, offset: const Offset(0, 2)),
                       ],
                     ),
                     child: TextField(
@@ -753,10 +668,7 @@ class _SearchScreenState extends State<SearchScreen> {
                               )
                             : null,
                         border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 14,
-                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                       ),
                       onChanged: (val) => setState(() {}),
                     ),
@@ -765,41 +677,21 @@ class _SearchScreenState extends State<SearchScreen> {
               ),
             ),
 
-            // ── Filter Row ──────────────────────────
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Row(
                 children: [
-                  Expanded(
-                    child: _buildDropdown(
-                      'City',
-                      _selectedCity,
-                      _cities,
-                      (v) => setState(() => _selectedCity = v!),
-                    ),
-                  ),
+                  Expanded(child: _buildDropdown('City', _selectedCity, _cities, (v) => setState(() => _selectedCity = v!))),
                   const SizedBox(width: 10),
-                  Expanded(
-                    child: _buildDropdown(
-                      'Category',
-                      _selectedCategory,
-                      _categories,
-                      (v) => setState(() => _selectedCategory = v!),
-                    ),
-                  ),
+                  Expanded(child: _buildDropdown('Category', _selectedCategory, _categories, (v) => setState(() => _selectedCategory = v!))),
                   const SizedBox(width: 10),
                   ElevatedButton(
                     onPressed: () => _search(_searchController.text),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: kPrimary,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 14,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       elevation: 0,
                     ),
                     child: const Icon(Icons.tune),
@@ -810,12 +702,9 @@ class _SearchScreenState extends State<SearchScreen> {
 
             const SizedBox(height: 16),
 
-            // ── Body ────────────────────────────────
             Expanded(
               child: _isSearching
-                  ? const Center(
-                      child: CircularProgressIndicator(color: kPrimary),
-                    )
+                  ? const Center(child: CircularProgressIndicator(color: kPrimary))
                   : !_hasSearched
                       ? _buildPopularSearches()
                       : _results.isEmpty
@@ -828,12 +717,7 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  Widget _buildDropdown(
-    String hint,
-    String value,
-    List<String> items,
-    void Function(String?) onChanged,
-  ) {
+  Widget _buildDropdown(String hint, String value, List<String> items, void Function(String?) onChanged) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
@@ -845,14 +729,9 @@ class _SearchScreenState extends State<SearchScreen> {
         child: DropdownButton<String>(
           value: value,
           isExpanded: true,
-          style: const TextStyle(
-            fontSize: 13,
-            color: Color(0xFF333333),
-          ),
+          style: const TextStyle(fontSize: 13, color: Color(0xFF333333)),
           onChanged: onChanged,
-          items: items
-              .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-              .toList(),
+          items: items.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
         ),
       ),
     );
@@ -864,67 +743,36 @@ class _SearchScreenState extends State<SearchScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Popular searches',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF1A1A2E),
-            ),
-          ),
+          const Text('Popular searches', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF1A1A2E))),
           const SizedBox(height: 12),
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: _popular
-                .map(
-                  (p) => GestureDetector(
-                    onTap: () {
-                      _searchController.text = p;
-                      _search(p);
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: const Color(0xFFE0E0E0)),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.trending_up,
-                            size: 14,
-                            color: kPrimary,
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            p,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              color: Color(0xFF444444),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                )
-                .toList(),
+            children: _popular.map((p) => GestureDetector(
+              onTap: () {
+                _searchController.text = p;
+                _search(p);
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFFE0E0E0)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.trending_up, size: 14, color: kPrimary),
+                    const SizedBox(width: 6),
+                    Text(p, style: const TextStyle(fontSize: 13, color: Color(0xFF444444))),
+                  ],
+                ),
+              ),
+            )).toList(),
           ),
           const SizedBox(height: 28),
-          const Text(
-            'Browse by City',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF1A1A2E),
-            ),
-          ),
+          const Text('Browse by City', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF1A1A2E))),
           const SizedBox(height: 12),
           GridView.count(
             crossAxisCount: 2,
@@ -964,14 +812,7 @@ class _SearchScreenState extends State<SearchScreen> {
           children: [
             Icon(icon, color: color, size: 20),
             const SizedBox(width: 8),
-            Text(
-              city,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: color,
-              ),
-            ),
+            Text(city, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: color)),
           ],
         ),
       ),
@@ -983,25 +824,11 @@ class _SearchScreenState extends State<SearchScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.search_off,
-            size: 64,
-            color: kPrimary.withOpacity(0.3),
-          ),
+          Icon(Icons.search_off, size: 64, color: kPrimary.withOpacity(0.3)),
           const SizedBox(height: 16),
-          const Text(
-            'No results found',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF1A1A2E),
-            ),
-          ),
+          const Text('No results found', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Color(0xFF1A1A2E))),
           const SizedBox(height: 8),
-          const Text(
-            'Try a different keyword or filter',
-            style: TextStyle(color: Color(0xFF888888)),
-          ),
+          const Text('Try a different keyword or filter', style: TextStyle(color: Color(0xFF888888))),
         ],
       ),
     );
@@ -1024,100 +851,49 @@ class _SearchScreenState extends State<SearchScreen> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
+            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: const Offset(0, 2))],
           ),
           child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 8,
-            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             leading: Container(
               width: 48,
               height: 48,
-              decoration: BoxDecoration(
-                color: kPrimaryLight,
-                borderRadius: BorderRadius.circular(12),
-              ),
+              decoration: BoxDecoration(color: kPrimaryLight, borderRadius: BorderRadius.circular(12)),
               child: const Icon(Icons.place, color: kPrimary, size: 24),
             ),
-            title: Text(
-              name,
-              style: const TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 15,
-                color: Color(0xFF1A1A2E),
-              ),
-            ),
+            title: Text(name, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15, color: Color(0xFF1A1A2E))),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 2),
                 Row(
                   children: [
-                    const Icon(
-                      Icons.location_on,
-                      size: 12,
-                      color: Color(0xFF888888),
-                    ),
+                    const Icon(Icons.location_on, size: 12, color: Color(0xFF888888)),
                     const SizedBox(width: 2),
-                    Text(
-                      '$city · $category',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: Color(0xFF888888),
-                      ),
-                    ),
+                    Text('$city · $category', style: const TextStyle(fontSize: 13, color: Color(0xFF888888))),
                   ],
                 ),
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    const Icon(
-                      Icons.star_rounded,
-                      size: 14,
-                      color: Color(0xFFFFC107),
-                    ),
+                    const Icon(Icons.star_rounded, size: 14, color: Color(0xFFFFC107)),
                     const SizedBox(width: 2),
-                    Text(
-                      rating.toStringAsFixed(1),
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
+                    Text(rating.toStringAsFixed(1), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
                     if (price.isNotEmpty) ...[
                       const SizedBox(width: 8),
-                      Text(
-                        price,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: kPrimary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                      Text(price, style: const TextStyle(fontSize: 12, color: kPrimary, fontWeight: FontWeight.w600)),
                     ],
                   ],
                 ),
               ],
             ),
-            trailing: const Icon(
-              Icons.chevron_right,
-              color: Color(0xFFCCCCCC),
-            ),
-           onTap: () {
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) => PlaceDetailsScreen(place: place),
-    ),
-  );
-},
+            trailing: const Icon(Icons.chevron_right, color: Color(0xFFCCCCCC)),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => PlaceDetailsScreen(place: place)),
+              );
+            },
           ),
         );
       },
