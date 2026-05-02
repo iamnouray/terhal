@@ -19,7 +19,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     setState(() => _isLoading = true);
     try {
       final response = await http.post(
-        Uri.parse('https://terhal-bapl.onrender.com/users/register'),        headers: {'Content-Type': 'application/json'},
+        Uri.parse('http://10.0.2.2:8000/users/register'),        headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'name': _nameController.text,
           'email': _emailController.text,
