@@ -42,19 +42,19 @@ class _SurveyScreenState extends State<SurveyScreen> {
         budgetLevel = '\$\$\$';
       }
 
-      final response = await http.put(
-       Uri.parse('http://10.0.2.2:8000/users/$userId/preferences'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'mood': _mood,
-          'visitor_type': _visitorType,
-          'preferred_time': _preferredTime,
-          'activity': _activity,
-          'city': _city,
-          'budget': budgetLevel,
-          'environment': null,
-        }),
-      );
+  final response = await http.put(
+  Uri.parse('http://10.0.2.2:8000/users/$userId/preferences'),
+  headers: {'Content-Type': 'application/json'},
+  body: jsonEncode({
+    'mood': _mood?.toLowerCase(),
+    'visitor_type': _visitorType?.toLowerCase(),
+    'preferred_time': _preferredTime?.toLowerCase(),
+    'activity': _activity?.toLowerCase(),
+    'city': _city?.toLowerCase(),
+    'budget': budgetLevel,
+    'environment': null,
+  }),
+);
       print('Survey status: ${response.statusCode}');  // ← هنا
       print('Survey body: ${response.body}');           // ← وهنا
       final data = jsonDecode(response.body);
