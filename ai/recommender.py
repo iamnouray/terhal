@@ -210,17 +210,14 @@ def get_recommendations(
     if survey is None:
         survey = {}
 
-    # Load from cache — fast after first request
     all_places = _get_all_places()
     if not all_places:
         return []
 
     df = pd.DataFrame(all_places).reset_index(drop=True)
 
-    # Normalize survey answers
     survey = _normalize_survey(survey)
 
-    # Pull values from survey if not passed directly
     city           = city           or survey.get("city")
     visitor_type   = visitor_type   or survey.get("visitor_type")
     preferred_time = preferred_time or survey.get("preferred_time")
@@ -256,9 +253,8 @@ def get_recommendations(
             filtered = tmp
 
     if budget:
-        tmp = filtered[
-            filtered["prices"].str.contains(re.escape(budget), case=False, na=False)
-        ]
+        allowed = BUDGET_MAP.get(budget, [budget])
+        tmp = filtered[filtered["prices"].str.strip().isin(allowed)]
         if not tmp.empty:
             filtered = tmp
 
@@ -266,6 +262,16 @@ def get_recommendations(
         filtered = df[df["city"].str.lower() == city.lower()] if city else df.copy()
     if len(filtered) < top_n:
         filtered = df.copy()
+
+    filtered = filtered.reset_index(drop=True)
+
+    # ── STEP 1.5: Activity Hard Filter (يشتغل للجميع) ────────────
+    activity = (survey.get("activity") or "").lower().strip()
+    target_cats = ACTIVITY_CATEGORY_MAP.get(activity, [])
+    if target_cats:
+        tmp = filtered[filtered["category"].str.lower().isin(target_cats)]
+        if not tmp.empty:
+            filtered = tmp
 
     filtered = filtered.reset_index(drop=True)
 
@@ -277,7 +283,7 @@ def get_recommendations(
     if filtered.empty:
         filtered = df.copy().reset_index(drop=True)
 
-    # ── STEP 3: Survey boost scores ──────────────────────────────
+    filtered = filtered.reset_index(drop=True)
     survey_boost = _apply_survey_boost(filtered, survey)
 
     # ── STEP 4: Cosine similarity (returning users) ───────────────
@@ -315,21 +321,31 @@ def get_recommendations(
                 SURVEY_WEIGHT     * filtered["survey_boost"]
             )
 
-            fav_category = (
-                liked_places["category"].mode()[0]
-                if "category" in liked_places.columns
-                else None
-            )
-            if fav_category:
+            # ✅ استخدام activity السرفي الحالي بدل fav_category
+            if target_cats:
                 fav_pool   = filtered[
-                    filtered["category"] == fav_category
+                    filtered["category"].str.lower().isin(target_cats)
                 ].nlargest(int(top_n * 0.7) + 1, "final_score")
                 other_pool = filtered[
-                    filtered["category"] != fav_category
+                    filtered["category"].str.lower().isin(target_cats) == False
                 ].nlargest(int(top_n * 0.3) + 1, "final_score")
-                top_pool   = pd.concat([fav_pool, other_pool])
+                top_pool = pd.concat([fav_pool, other_pool])
             else:
-                top_pool = filtered.nlargest(min(top_n * 2, len(filtered)), "final_score")
+                fav_category = (
+                    liked_places["category"].mode()[0]
+                    if "category" in liked_places.columns
+                    else None
+                )
+                if fav_category:
+                    fav_pool   = filtered[
+                        filtered["category"] == fav_category
+                    ].nlargest(int(top_n * 0.7) + 1, "final_score")
+                    other_pool = filtered[
+                        filtered["category"] != fav_category
+                    ].nlargest(int(top_n * 0.3) + 1, "final_score")
+                    top_pool   = pd.concat([fav_pool, other_pool])
+                else:
+                    top_pool = filtered.nlargest(min(top_n * 2, len(filtered)), "final_score")
 
             result = top_pool.sample(frac=1, random_state=None).head(top_n)
             result = result.drop(
