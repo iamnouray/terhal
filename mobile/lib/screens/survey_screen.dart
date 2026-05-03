@@ -33,30 +33,34 @@ class _SurveyScreenState extends State<SurveyScreen> {
       final prefs = await SharedPreferences.getInstance();
       final userId = prefs.getString('user_id');
 
+      // ✅ FIX: حدود الميزانية الصحيحة
       String budgetLevel;
-      if (_budget < 150) {
+      if (_budget <= 150) {
         budgetLevel = '\$';
-      } else if (_budget < 350) {
+      } else if (_budget <= 300) {
         budgetLevel = '\$\$';
       } else {
         budgetLevel = '\$\$\$';
       }
 
-  final response = await http.put(
-  Uri.parse('http://10.0.2.2:8000/users/$userId/preferences'),
-  headers: {'Content-Type': 'application/json'},
-  body: jsonEncode({
-    'mood': _mood?.toLowerCase(),
-    'visitor_type': _visitorType?.toLowerCase(),
-    'preferred_time': _preferredTime?.toLowerCase(),
-    'activity': _activity?.toLowerCase(),
-    'city': _city?.toLowerCase(),
-    'budget': budgetLevel,
-    'environment': null,
-  }),
-);
-      print('Survey status: ${response.statusCode}');  // ← هنا
-      print('Survey body: ${response.body}');           // ← وهنا
+      final response = await http.put(
+        Uri.parse('http://10.0.2.2:8000/users/$userId/preferences'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'mood': _mood?.toLowerCase(),
+          'visitor_type': _visitorType?.toLowerCase(),
+          'preferred_time': _preferredTime?.toLowerCase(),
+          'activity': _activity?.toLowerCase(),
+          'city': _city?.toLowerCase(),
+          'budget': budgetLevel,
+          'environment': null,
+        }),
+      );
+      print('Survey status: ${response.statusCode}');
+      print('Survey body: ${response.body}');
+      print('Budget sent: $budgetLevel');
+      print('Activity sent: ${_activity?.toLowerCase()}');
+      print('City sent: ${_city?.toLowerCase()}');
       final data = jsonDecode(response.body);
       if (data['error'] != null) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -149,8 +153,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
             style: TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         for (final o in ['Riyadh', 'Jeddah', 'Abha', 'AlUla', 'Madinah'])
-       _buildOption(o, _city,
-       (v) => setState(() => _city = v)),
+          _buildOption(o, _city, (v) => setState(() => _city = v)),
         const SizedBox(height: 24),
         const Text('How much is your budget?',
             style: TextStyle(fontWeight: FontWeight.bold)),
@@ -188,7 +191,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(
                   steps.length,
-                      (i) => Container(
+                  (i) => Container(
                     margin: const EdgeInsets.symmetric(horizontal: 4),
                     width: i == _currentStep ? 32 : 8,
                     height: 4,
@@ -226,22 +229,26 @@ class _SurveyScreenState extends State<SurveyScreen> {
                   child: const Text('Back'),
                 ),
               if (!isLastStep)
-  ElevatedButton(
-    onPressed: () {
-      if (_currentStep == 0 && (_mood == null || _visitorType == null)) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please answer all questions')),
-        );
-        return;
-      }
-      if (_currentStep == 1 && (_preferredTime == null || _activity == null)) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please answer all questions')),
-        );
-        return;
-      }
-      setState(() => _currentStep++);
-    },
+                ElevatedButton(
+                  onPressed: () {
+                    if (_currentStep == 0 &&
+                        (_mood == null || _visitorType == null)) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content: Text('Please answer all questions')),
+                      );
+                      return;
+                    }
+                    if (_currentStep == 1 &&
+                        (_preferredTime == null || _activity == null)) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content: Text('Please answer all questions')),
+                      );
+                      return;
+                    }
+                    setState(() => _currentStep++);
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF6B5EA8),
                     minimumSize: const Size(double.infinity, 48),
@@ -256,17 +263,17 @@ class _SurveyScreenState extends State<SurveyScreen> {
                 _isLoading
                     ? const CircularProgressIndicator()
                     : ElevatedButton(
-                  onPressed: _submitSurvey,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF6B5EA8),
-                    minimumSize: const Size(double.infinity, 48),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                  ),
-                  child: const Text('Done',
-                      style: TextStyle(color: Colors.white)),
-                ),
+                        onPressed: _submitSurvey,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF6B5EA8),
+                          minimumSize: const Size(double.infinity, 48),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                        ),
+                        child: const Text('Done',
+                            style: TextStyle(color: Colors.white)),
+                      ),
             ],
           ),
         ),
